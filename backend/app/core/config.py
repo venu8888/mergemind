@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     ENVIRONMENT: Literal["development", "testing", "staging", "production"] = "development"
     DEBUG: bool = False
+    API_KEY: str = Field(
+        default="mergemind-dev-insecure-key",
+        description="Pre-shared API key for authenticated API endpoints in local development",
+    )
 
     # CORS Configuration
     CORS_ORIGINS: list[str] | str = Field(

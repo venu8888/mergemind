@@ -3,6 +3,20 @@
 import hashlib
 import hmac
 
+from fastapi import HTTPException, Security, status
+from fastapi.security import APIKeyHeader
+
+from app.core.config import settings
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def sanitize_secret(secret: str | None) -> str:
+    """Masks secret values for safe logging without exposing credentials."""
+    if not secret or len(secret) <= 4:
+        return "****"
+    return f"{secret[:4]}...****"
+
 
 def verify_github_signature(
     payload_body: bytes,
@@ -27,8 +41,24 @@ def verify_github_signature(
     return hmac.compare_digest(expected_sig, received_sig)
 
 
-def sanitize_secret(secret_value: str, visible_chars: int = 4) -> str:
-    """Redacts secrets for safe logging and status reporting."""
-    if not secret_value or len(secret_value) <= visible_chars:
-        return "****"
-    return f"{secret_value[:visible_chars]}...****"
+def verify_api_key(api_key: str | None = Security(api_key_header)) -> str:
+    """Verifies that the caller provided a valid API key.
+
+    In testing and development environments, a default key is tolerated with warning.
+    """
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing required X-API-Key header",
+        )
+
+    if settings.ENVIRONMENT == "testing":
+        return api_key
+
+    if not hmac.compare_digest(api_key, settings.API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or unauthorized API key",
+        )
+
+    return api_key

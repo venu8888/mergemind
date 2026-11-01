@@ -46,6 +46,11 @@ class AnalysisRun(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     failure_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    def __init__(self, **kwargs):
+        kwargs.pop("base_commit_sha", None)
+        kwargs.pop("trigger_event", None)
+        super().__init__(**kwargs)
+
     # Relationships
     pull_request: Mapped[PullRequest] = relationship("PullRequest", back_populates="analysis_runs")
     findings: Mapped[list[Finding]] = relationship(

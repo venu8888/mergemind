@@ -15,6 +15,12 @@ sys.path.insert(0, str(backend_path))
 os.environ["ENVIRONMENT"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_mergemind.db"
 os.environ["DATABASE_SYNC_URL"] = "sqlite:///./test_mergemind.db"
+os.environ["GITHUB_WEBHOOK_SECRET"] = "test-webhook-secret-key-12345"
+
+from app.core.config import settings
+
+settings.GITHUB_WEBHOOK_SECRET = "test-webhook-secret-key-12345"
+settings.API_KEY = "test-api-key-12345"
 
 from app.core.database import engine
 from app.main import app
@@ -23,12 +29,13 @@ from app.models import Base
 
 @pytest.fixture(autouse=True)
 async def setup_test_database():
-    """Initializes test database tables before tests and cleans up after."""
+    """Initializes test database tables once and truncates rows between tests."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        for table in reversed(Base.metadata.sorted_tables):
+            await conn.execute(table.delete())
 
 
 @pytest.fixture(scope="session", autouse=True)

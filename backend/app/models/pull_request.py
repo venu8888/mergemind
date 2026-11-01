@@ -36,6 +36,40 @@ class PullRequest(Base):
         default=lambda: datetime.now(UTC),
         nullable=False,
     )
+    github_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    def __init__(self, **kwargs):
+        if "author" in kwargs:
+            kwargs["author_username"] = kwargs.pop("author")
+        if "head_sha" in kwargs:
+            kwargs["current_head_sha"] = kwargs.pop("head_sha")
+        kwargs.pop("base_sha", None)
+        kwargs.pop("github_pr_id", None)
+        kwargs.pop("github_created_at", None)
+        if "base_branch" not in kwargs:
+            kwargs["base_branch"] = "main"
+        if "head_branch" not in kwargs:
+            kwargs["head_branch"] = "feature"
+        super().__init__(**kwargs)
+
+    # Compatibility properties
+    @property
+    def head_sha(self) -> str:
+        return self.current_head_sha
+
+    @head_sha.setter
+    def head_sha(self, value: str) -> None:
+        self.current_head_sha = value
+
+    @property
+    def author(self) -> str:
+        return self.author_username
+
+    @author.setter
+    def author(self, value: str) -> None:
+        self.author_username = value
 
     # Relationships
     repository: Mapped[Repository] = relationship("Repository", back_populates="pull_requests")
