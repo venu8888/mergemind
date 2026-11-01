@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import re
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
@@ -16,6 +17,26 @@ def sanitize_secret(secret: str | None) -> str:
     if not secret or len(secret) <= 4:
         return "****"
     return f"{secret[:4]}...****"
+
+
+_LOG_CREDENTIAL_PATTERNS = [
+    re.compile(r"(ghp_[A-Za-z0-9_]+)"),
+    re.compile(r"(github_pat_[A-Za-z0-9_]+)"),
+    re.compile(r"Bearer\s+([A-Za-z0-9_\-\.]{20,})", re.IGNORECASE),
+    re.compile(r"(-----BEGIN [A-Z ]+ PRIVATE KEY-----[^-]+-----END [A-Z ]+ PRIVATE KEY-----)"),
+    re.compile(r"password\s*=\s*['\"]?([^'\"\s]{4,})['\"]?", re.IGNORECASE),
+    re.compile(r"secret\s*=\s*['\"]?([^'\"\s]{4,})['\"]?", re.IGNORECASE),
+]
+
+
+def sanitize_log_output(log_text: str | None) -> str:
+    """Masks secret values and credential tokens inside logs while preserving log output."""
+    if not log_text:
+        return ""
+    sanitized = log_text
+    for pattern in _LOG_CREDENTIAL_PATTERNS:
+        sanitized = pattern.sub("[REDACTED_CREDENTIAL]", sanitized)
+    return sanitized
 
 
 def verify_github_signature(

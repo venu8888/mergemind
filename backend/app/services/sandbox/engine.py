@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass
 
 from app.core.config import settings
-from app.core.security import sanitize_secret
+from app.core.security import sanitize_log_output
 
 logger = logging.getLogger(__name__)
 
@@ -237,8 +237,8 @@ class SandboxEngine:
             return SandboxExecutionResult(
                 exit_code=proc.returncode if proc.returncode is not None else -1,
                 duration_ms=duration_ms,
-                stdout=sanitize_secret(raw_stdout),
-                stderr=sanitize_secret(raw_stderr),
+                stdout=sanitize_log_output(raw_stdout),
+                stderr=sanitize_log_output(raw_stderr),
                 oom_killed=(proc.returncode == 137),
                 container_id=container_name,
                 container_cleaned=True,

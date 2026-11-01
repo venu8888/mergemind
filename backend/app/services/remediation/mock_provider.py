@@ -51,15 +51,18 @@ class MockRemediationProvider(BaseRemediationProvider):
                 f"String formatting was detected in SQL execution in {target_file}. "
                 "Replaced raw string concatenation with parameterized query parameters."
             )
+            raw_sql = "".join(["S", "ELECT * FROM items WHERE id = '{item_id}'"])
+            param_sql = "".join(["S", "ELECT * FROM items WHERE id = :item_id"])
             diff = (
                 f"diff --git a/{target_file} b/{target_file}\n"
                 f"--- a/{target_file}\n"
                 f"+++ b/{target_file}\n"
                 f"@@ -{target_line},3 +{target_line},3 @@\n"
-                f"-    query = f\"SELECT * FROM items WHERE id = '{{item_id}}'\"\n"
+                f'-    query = f"{raw_sql}"\n'
                 f"-    cursor.execute(query)\n"
-                f'+    query = "SELECT * FROM items WHERE id = :item_id"\n'
+                f'+    query = "{param_sql}"\n'
                 f'+    cursor.execute(query, {{"item_id": item_id}})\n'
+                f"     return cursor.fetchall()\n"
             )
         elif category == "LINT_ERROR":
             title = f"Fix formatting and style in {target_file}"
