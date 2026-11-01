@@ -2,11 +2,11 @@
 
 import os
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 
-class FileCategory(str, Enum):
+class FileCategory(StrEnum):
     """File categorization taxonomy for MergeMind analysis pipeline."""
 
     PYTHON_SOURCE = "PYTHON_SOURCE"

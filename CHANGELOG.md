@@ -52,3 +52,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FastAPI REST backend with health and delivery endpoints.
 - React 19 + TypeScript frontend with Tailwind CSS.
 - Automated GitHub Actions CI pipeline and Docker Compose stack.
+

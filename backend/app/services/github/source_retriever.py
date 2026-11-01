@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 from app.services.github.classifier import FileCategory, FileClassifier
 from app.services.github.client import GitHubClient
@@ -23,7 +23,7 @@ def compute_git_blob_hash(content: bytes) -> str:
     return hashlib.sha1(header + content, usedforsecurity=False).hexdigest()  # nosec B324
 
 
-class RetrievalStatus(str, Enum):
+class RetrievalStatus(StrEnum):
     """Integrity status taxonomy for retrieved source files."""
 
     VERIFIED_COMPLETE = "VERIFIED_COMPLETE"

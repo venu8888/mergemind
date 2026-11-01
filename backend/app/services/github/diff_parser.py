@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 logger = logging.getLogger(__name__)
 
 
-class ChangeType(str, Enum):
+class ChangeType(StrEnum):
     """Classification of changes applied to a file within a patch."""
 
     ADDED = "ADDED"
@@ -19,7 +19,7 @@ class ChangeType(str, Enum):
     RENAMED = "RENAMED"
 
 
-class LineType(str, Enum):
+class LineType(StrEnum):
     """Categorization of individual lines within a diff chunk."""
 
     CONTEXT = "CONTEXT"
