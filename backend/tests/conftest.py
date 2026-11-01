@@ -40,14 +40,20 @@ async def setup_test_database():
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_test_db():
-    """Removes temporary test sqlite database file upon test session completion."""
+    """Removes temporary test sqlite database file upon test session start and completion."""
+    for db_file in [Path("./test_mergemind.db"), Path("backend/test_mergemind.db")]:
+        if db_file.exists():
+            try:
+                db_file.unlink()
+            except Exception:
+                pass
     yield
-    db_file = Path("./test_mergemind.db")
-    if db_file.exists():
-        try:
-            db_file.unlink()
-        except Exception:
-            pass
+    for db_file in [Path("./test_mergemind.db"), Path("backend/test_mergemind.db")]:
+        if db_file.exists():
+            try:
+                db_file.unlink()
+            except Exception:
+                pass
 
 
 @pytest.fixture

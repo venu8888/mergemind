@@ -8,6 +8,7 @@ from app.models.installation import Installation
 from app.models.pull_request import PullRequest
 from app.models.quality_assessment import QualityAssessment
 from app.models.repository import Repository
+from app.models.repository_health import RepositoryHealthAssessment
 from app.models.test_execution import TestExecution
 from app.models.webhook_delivery import WebhookDelivery
 
@@ -16,6 +17,7 @@ __all__ = [
     "Installation",
     "WebhookDelivery",
     "Repository",
+    "RepositoryHealthAssessment",
     "PullRequest",
     "AnalysisRun",
     "Finding",

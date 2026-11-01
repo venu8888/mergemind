@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -45,6 +45,14 @@ class AnalysisRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     failure_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # Phase 3 Quality Gate & Verification Completeness
+    verification_completeness: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gate_verdict: Mapped[str] = mapped_column(
+        String(32), default="PENDING", nullable=False
+    )  # PASSED, FAILED, BLOCKED_COMPLETENESS, WARNING, PENDING
+    delta_summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     def __init__(self, **kwargs):
         kwargs.pop("base_commit_sha", None)

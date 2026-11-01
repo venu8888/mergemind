@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -20,6 +20,7 @@ class Finding(Base):
     __tablename__ = "findings"
     __table_args__ = (
         Index("idx_findings_run_severity", "analysis_run_id", "severity", "is_blocking"),
+        Index("ix_findings_fingerprint", "fingerprint"),
     )
 
     analysis_run_id: Mapped[str] = mapped_column(
@@ -44,6 +45,16 @@ class Finding(Base):
         String(50), default="CONFIRMED_DETERMINISTIC", nullable=False
     )  # CONFIRMED_DETERMINISTIC, UNVERIFIED_ADVISORY
     is_blocking: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Phase 3 Delta Classification & Provenance
+    delta_status: Mapped[str] = mapped_column(
+        String(32), default="UNKNOWN", nullable=False
+    )  # INTRODUCED_NEW, EXISTING_BASELINE, FIXED_IN_PR, PRE_EXISTING_MODIFIED, AMBIGUOUS_MODIFIED_CONTEXT, UNKNOWN
+    fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provenance_type: Mapped[str] = mapped_column(
+        String(32), default="DETERMINISTIC_TOOL", nullable=False
+    )  # DETERMINISTIC_TOOL, EMPIRICAL_EXECUTION, AI_ADVISORY
+    advisory_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Relationships
     analysis_run: Mapped[AnalysisRun] = relationship("AnalysisRun", back_populates="findings")

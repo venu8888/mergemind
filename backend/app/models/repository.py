@@ -13,6 +13,7 @@ from app.models.base import Base
 if TYPE_CHECKING:
     from app.models.installation import Installation
     from app.models.pull_request import PullRequest
+    from app.models.repository_health import RepositoryHealthAssessment
 
 
 class Repository(Base):
@@ -56,4 +57,7 @@ class Repository(Base):
     )
     pull_requests: Mapped[list[PullRequest]] = relationship(
         "PullRequest", back_populates="repository", cascade="all, delete-orphan"
+    )
+    health_assessments: Mapped[list[RepositoryHealthAssessment]] = relationship(
+        "RepositoryHealthAssessment", back_populates="repository", cascade="all, delete-orphan"
     )
