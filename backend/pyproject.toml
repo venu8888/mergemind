@@ -51,4 +51,5 @@ ignore = ["B008"]
 minversion = "8.0"
 addopts = "-ra -q --strict-markers"
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"

@@ -40,7 +40,7 @@ jobs:
       - name: Execute Automated Backend Test Suite (Pytest)
         run: |
           cd backend
-          pytest -v --cov=app --cov-report=term-missing
+          python -m pytest -v --cov=app --cov-report=term-missing
 
   frontend-checks:
     name: Frontend TypeScript & Production Build
