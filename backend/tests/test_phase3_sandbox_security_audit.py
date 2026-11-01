@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tempfile
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -111,14 +111,50 @@ async def test_sandbox_zero_host_execution_fallback():
 async def test_sandbox_hard_execution_timeout():
     """Verify that container execution exceeding timeout_seconds is terminated."""
     engine = SandboxEngine(timeout_seconds=1)
+    mock_p = MagicMock()
+    mock_p.kill = MagicMock()
+    mock_p.wait = AsyncMock()
     with tempfile.TemporaryDirectory() as tmpdir:
         # Simulate timeout by patching asyncio.wait_for to raise TimeoutError
         with (
             patch("shutil.which", return_value="/fake/docker"),
-            patch("asyncio.create_subprocess_exec"),
+            patch("asyncio.create_subprocess_exec", return_value=mock_p),
             patch("asyncio.wait_for", side_effect=TimeoutError()),
         ):
             res = await engine.execute_in_container(tmpdir, ["sleep", "100"])
             assert res.timed_out is True
             assert res.exit_code in (-1, 124)
             assert "Timeout after 1s" in (res.error or "")
+
+
+def test_sandbox_timeout_clamped_to_global_maximum():
+    """Verify that timeout cannot silently exceed the approved 60s hard maximum."""
+    # Attempting to set 300s must be clamped to 60s
+    engine_long = SandboxEngine(timeout_seconds=300)
+    assert engine_long.timeout_seconds == 60
+    assert engine_long.timeout_seconds <= SandboxEngine.GLOBAL_MAX_TIMEOUT_SECONDS
+
+    # Setting shorter timeout (e.g. 25s) is allowed
+    engine_short = SandboxEngine(timeout_seconds=25)
+    assert engine_short.timeout_seconds == 25
+
+
+@pytest.mark.asyncio
+async def test_sandbox_timeout_terminates_container_process():
+    """Verify that a timed-out execution explicitly kills the underlying container process."""
+    engine = SandboxEngine(timeout_seconds=2)
+    mock_proc = MagicMock()
+    mock_proc.kill = MagicMock()
+    mock_proc.wait = AsyncMock()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with (
+            patch("shutil.which", return_value="/fake/docker"),
+            patch("asyncio.create_subprocess_exec", return_value=mock_proc),
+            patch("asyncio.wait_for", side_effect=TimeoutError()),
+        ):
+            res = await engine.execute_in_container(tmpdir, ["sleep", "60"])
+            assert res.timed_out is True
+            # Verified process termination
+            mock_proc.kill.assert_called_once()
+            mock_proc.wait.assert_awaited_once()

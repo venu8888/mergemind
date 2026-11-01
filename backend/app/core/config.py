@@ -55,7 +55,7 @@ class Settings(BaseSettings):
         default="container",
         description="Runner mode: container for ephemeral sandbox, disabled to fail-closed",
     )
-    SANDBOX_TIMEOUT_SECONDS: int = Field(default=60, ge=5, le=300)
+    SANDBOX_TIMEOUT_SECONDS: int = Field(default=60, ge=5, le=60)
     SANDBOX_MAX_MEMORY_MB: int = Field(default=512, ge=64, le=2048)
     SANDBOX_CPU_QUOTA: float = Field(default=1.0, ge=0.25, le=4.0)
 

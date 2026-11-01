@@ -31,6 +31,8 @@ class SandboxExecutionResult:
 class SandboxEngine:
     """Manages ephemeral container lifecycles with strict resource limits and network isolation."""
 
+    GLOBAL_MAX_TIMEOUT_SECONDS: int = 60
+
     def __init__(
         self,
         image: str = "python:3.13-slim",
@@ -39,7 +41,11 @@ class SandboxEngine:
         cpu_quota: float | None = None,
     ):
         self.image = image
-        self.timeout_seconds = timeout_seconds or settings.SANDBOX_TIMEOUT_SECONDS
+        raw_timeout = (
+            timeout_seconds if timeout_seconds is not None else settings.SANDBOX_TIMEOUT_SECONDS
+        )
+        # Enforce approved 60-second hard maximum. No runner may silently override this limit.
+        self.timeout_seconds = min(raw_timeout, self.GLOBAL_MAX_TIMEOUT_SECONDS)
         self.memory_mb = memory_mb or settings.SANDBOX_MAX_MEMORY_MB
         self.cpu_quota = cpu_quota or settings.SANDBOX_CPU_QUOTA
 
@@ -157,7 +163,18 @@ class SandboxEngine:
             )
         except TimeoutError:
             duration_ms = int((time.perf_counter() - start_time) * 1000)
-            logger.warning("Sandbox execution timed out after %ds", self.timeout_seconds)
+            logger.warning(
+                "Sandbox execution timed out after %ds; terminating container process",
+                self.timeout_seconds,
+            )
+            try:
+                proc.kill()
+                await proc.wait()
+            except ProcessLookupError:
+                pass
+            except Exception as kill_err:
+                logger.warning("Error terminating timed-out container process: %s", kill_err)
+
             return SandboxExecutionResult(
                 exit_code=-1,
                 duration_ms=duration_ms,

@@ -86,9 +86,7 @@ def test_edge_case_missing_security_configuration(scorer: RepositoryHealthScorer
     assert out.assessment_completeness == 75.0
     # Core security dimension is unconfigured -> PROVISIONAL
     assert out.is_qualified is False
-    assert "Core dimensions (Code Quality or Security) were unconfigured or failed" in (
-        out.qualification_reason or ""
-    )
+    assert "Critical dimensions missing or incomplete: security" in (out.qualification_reason or "")
 
 
 def test_edge_case_scanner_unavailable_not_falsely_reported_as_code_defects(
@@ -197,3 +195,50 @@ def test_score_reproducibility_and_version(scorer: RepositoryHealthScorer):
     assert out1.assessment_completeness == out2.assessment_completeness
     assert out1.is_qualified == out2.is_qualified
     assert out1.dimension_status == out2.dimension_status
+
+
+def test_edge_case_missing_code_quality_config(scorer: RepositoryHealthScorer):
+    """Verify that an assessment missing Code Quality (a critical dimension) cannot qualify."""
+    cq = _skipped(CheckType.STATIC_LINT, "ruff")
+    sec = _passed(CheckType.SECURITY_SCAN, "bandit")
+    dep = _passed(CheckType.DEPENDENCY_AUDIT, "pip-audit")
+    test = _passed(
+        CheckType.TEST_EXECUTION, "pytest", {"pass_rate_pct": 100.0, "coverage_pct": 80.0}
+    )
+    maint = _passed(
+        CheckType.MAINTAINABILITY,
+        "radon",
+        {"docstring_coverage_pct": 100.0, "complex_functions_count": 0},
+    )
+
+    out = scorer.evaluate(cq, sec, dep, test, maint)
+    assert out.dimension_status["code_quality"] == "UNCONFIGURED"
+    assert out.code_quality_score is None
+    assert out.assessment_completeness == 75.0
+    assert out.is_qualified is False
+    assert "code_quality" in (out.qualification_reason or "")
+
+
+def test_narrow_subset_with_100_percent_relative_completeness_cannot_qualify(
+    scorer: RepositoryHealthScorer,
+):
+    """Verify that 100% completeness over a narrow custom subset cannot qualify when critical dimensions are absent."""
+    cq = _skipped(CheckType.STATIC_LINT, "ruff")
+    sec = _skipped(CheckType.SECURITY_SCAN, "bandit")
+    dep = _skipped(CheckType.DEPENDENCY_AUDIT, "pip-audit")
+    test = _skipped(CheckType.TEST_EXECUTION, "pytest")
+    maint = _passed(
+        CheckType.MAINTAINABILITY,
+        "radon",
+        {"docstring_coverage_pct": 100.0, "complex_functions_count": 0},
+    )
+
+    # Custom override assigning 100% of weight to maintainability
+    out = scorer.evaluate(cq, sec, dep, test, maint, weights_override={"maintainability": 1.0})
+    # Relative completeness of the custom weight is 100.0%
+    assert out.assessment_completeness == 100.0
+    # BUT critical dimensions (code_quality, security) are absent -> MUST be unqualified
+    assert out.is_qualified is False
+    assert "Critical dimensions missing or incomplete" in (out.qualification_reason or "")
+    assert "code_quality" in out.qualification_reason
+    assert "security" in out.qualification_reason

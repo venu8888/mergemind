@@ -38,6 +38,9 @@ class RepositoryHealthScorer:
 
     POLICY_VERSION = "v2.2-calibrated"
 
+    CRITICAL_DIMENSIONS: set[str] = {"code_quality", "security"}
+    MIN_QUALIFIED_COMPLETENESS: float = 80.0
+
     DEFAULT_WEIGHTS = {
         "code_quality": 0.25,
         "security": 0.25,
@@ -172,25 +175,30 @@ class RepositoryHealthScorer:
             completeness = 0.0
 
         # 7. Qualification Guard
-        # Qualified requires completeness >= 80% AND core dimensions (code_quality & security) active
-        core_enabled = (
-            dimension_status.get("code_quality") == "ENABLED"
-            and dimension_status.get("security") == "ENABLED"
-        )
+        # Specification requires:
+        # 1. Assessment Completeness >= MIN_QUALIFIED_COMPLETENESS (80.0%)
+        # 2. ALL critical dimensions (code_quality and security) MUST be assessed, valid, and non-null
+        # Even if a subset has 100% relative completeness, if any critical dimension is missing or incomplete,
+        # is_qualified MUST be False.
+        missing_critical = [
+            dim
+            for dim in sorted(self.CRITICAL_DIMENSIONS)
+            if dimension_status.get(dim) != "ENABLED" or sub_scores.get(dim) is None
+        ]
 
-        if completeness >= 80.0 and core_enabled:
+        if completeness >= self.MIN_QUALIFIED_COMPLETENESS and not missing_critical:
             is_qualified = True
             qualification_reason = None
         else:
             is_qualified = False
             reasons = []
-            if completeness < 80.0:
+            if completeness < self.MIN_QUALIFIED_COMPLETENESS:
                 reasons.append(
-                    f"Assessment completeness is {completeness:.1f}% (requires >= 80.0%)"
+                    f"Assessment completeness is {completeness:.1f}% (requires >= {self.MIN_QUALIFIED_COMPLETENESS:.1f}%)"
                 )
-            if not core_enabled:
+            if missing_critical:
                 reasons.append(
-                    "Core dimensions (Code Quality or Security) were unconfigured or failed"
+                    f"Critical dimensions missing or incomplete: {', '.join(missing_critical)}"
                 )
             qualification_reason = "; ".join(reasons)
 
