@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="MergeMind: An Intelligent Pull Request Analysis and Verification Framework",
+    description="MergeMind: Intelligent Repository Health, Pull Request Verification and Automated Remediation Platform",
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     docs_url=f"{settings.API_V1_PREFIX}/docs",
     redoc_url=f"{settings.API_V1_PREFIX}/redoc",

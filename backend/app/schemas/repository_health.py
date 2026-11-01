@@ -50,3 +50,6 @@ class RepositoryHealthResponse(BaseModel):
     status: str
     created_at: datetime
     completed_at: datetime | None = None
+
+
+HealthAssessmentResponse = RepositoryHealthResponse

@@ -256,6 +256,33 @@ class GitHubClient:
             )
         return response.text
 
+    async def create_pull_request(
+        self,
+        owner: str,
+        repo: str | None = None,
+        title: str = "",
+        head: str = "",
+        base: str = "main",
+        body: str = "",
+        draft: bool = True,
+    ) -> dict[str, Any]:
+        """Creates a pull request (defaulting to draft) on GitHub."""
+        if repo is None and "/" in owner:
+            owner_part, repo_part = owner.split("/", 1)
+            path = f"/repos/{owner_part}/{repo_part}/pulls"
+        else:
+            path = f"/repos/{owner}/{repo}/pulls"
+
+        payload = {
+            "title": title,
+            "head": head,
+            "base": base,
+            "body": body,
+            "draft": draft,
+        }
+        response = await self._request(method="POST", path=path, json_data=payload)
+        return response.json()
+
     async def get_tree(
         self,
         owner: str,

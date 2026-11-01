@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Box, Cpu, RefreshCw } from 'lucide-react';
+import { Database, Box, RefreshCw } from 'lucide-react';
 import type { SystemHealth } from '../types';
 import { StatusBadge } from './StatusBadge';
 
@@ -16,18 +16,37 @@ export const HealthCard: React.FC<HealthCardProps> = ({
   error,
   onRefresh,
 }) => {
+  const getBadgeStatus = (status?: string): 'healthy' | 'degraded' | 'error' | 'pending' => {
+    if (!status) return 'pending';
+    const s = status.toLowerCase();
+    if (s === 'healthy' || s === 'ok') return 'healthy';
+    if (s === 'degraded' || s === 'warning') return 'degraded';
+    if (s === 'error' || s === 'failed') return 'error';
+    return 'pending';
+  };
+
+  const isDbConnected =
+    typeof health?.database === 'object' && health?.database !== null
+      ? Boolean(health.database.connected)
+      : health?.database === 'connected' || health?.status === 'healthy';
+
+  const dbDriver =
+    typeof health?.database === 'object' && health?.database !== null
+      ? health.database.url_driver || 'postgresql+asyncpg'
+      : String(health?.database || 'postgresql+asyncpg');
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
       <div className="flex items-center justify-between pb-5 border-b border-slate-800">
         <div>
           <h2 className="text-base font-semibold text-white">System Foundation Health</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Phase 1 Scaffolding & Live Infrastructure Connectivity
+            Scaffolding & Live Infrastructure Connectivity
           </p>
         </div>
         <div className="flex items-center space-x-3">
           {health ? (
-            <StatusBadge status={health.status} />
+            <StatusBadge status={getBadgeStatus(health.status)} />
           ) : error ? (
             <StatusBadge status="error" label="Backend Offline" />
           ) : (
@@ -63,15 +82,15 @@ export const HealthCard: React.FC<HealthCardProps> = ({
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
-                    health.database.connected ? 'bg-emerald-400' : 'bg-rose-400'
+                    isDbConnected ? 'bg-emerald-400' : 'bg-rose-400'
                   }`}
                 />
                 <span className="text-sm font-semibold text-white">
-                  {health.database.connected ? 'Connected' : 'Disconnected'}
+                  {isDbConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               <p className="text-xs font-mono text-slate-400 mt-1">
-                Driver: {health.database.url_driver}
+                Driver: {dbDriver}
               </p>
             </div>
           </div>
@@ -84,38 +103,34 @@ export const HealthCard: React.FC<HealthCardProps> = ({
             <div className="mt-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/50 font-mono font-medium">
-                  {health.sandbox.mode.toUpperCase()}
+                  {health.sandbox?.mode?.toUpperCase() || 'CONTAINER'}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {health.sandbox.mode === 'container' ? 'Container Isolation' : 'Fail-Closed Disabled'}
+                  {health.sandbox?.mode === 'container' || !health.sandbox ? 'Container Isolation' : 'Fail-Closed Disabled'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1 font-mono">
-                Timeout: {health.sandbox.timeout_seconds}s | RAM: {health.sandbox.max_memory_mb}MB
+                Timeout: {health.sandbox?.timeout_seconds ?? 60}s | RAM: {health.sandbox?.max_memory_mb ?? 512}MB
               </p>
             </div>
           </div>
 
           <div className="p-4 rounded-lg bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Environment</span>
-              <Cpu className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-medium text-slate-400">API Runtime</span>
+              <span className="text-xs font-mono text-emerald-400">v{health.version || '4.2.0'}</span>
             </div>
             <div className="mt-3">
-              <span className="text-sm font-semibold text-white capitalize">
-                {health.environment}
-              </span>
-              <p className="text-xs text-slate-400 mt-1 font-mono">
+              <div className="text-sm font-semibold text-white">
+                Environment: {health.environment || 'development'}
+              </div>
+              <p className="text-xs font-mono text-slate-400 mt-1">
                 {new Date(health.timestamp).toLocaleTimeString()}
               </p>
             </div>
           </div>
         </div>
-      ) : (
-        <div className="py-8 text-center text-slate-400 text-sm">
-          Loading system health diagnostics...
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };
