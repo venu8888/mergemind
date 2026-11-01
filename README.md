@@ -81,3 +81,4 @@ The development interface is accessible at `http://localhost:5173`.
 1. **Evidence-Backed Verification:** Every finding is cryptographically tied to the commit SHA and classified by its verifiable source.
 2. **Fail-Closed Security:** Untrusted pull-request code is never executed on the host. If an isolated container runner is offline, untrusted tests are explicitly disabled.
 3. **Decoupled Quality Gates:** Quality Score and Verification Completeness are evaluated independently. Critical vulnerabilities or failing tests block merges regardless of numerical score.
+
