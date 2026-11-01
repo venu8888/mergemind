@@ -28,6 +28,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@db:5432/mergemind
       DATABASE_SYNC_URL: postgresql+psycopg2://postgres:postgrespassword@db:5432/mergemind
@@ -35,6 +37,9 @@ services:
       DEBUG: "true"
       SANDBOX_TYPE: container
       ENABLE_IN_PROCESS_WORKER: "true"
+      GITHUB_APP_PRIVATE_KEY_PATH: keys/github-app.pem
+    volumes:
+      - ./backend/keys:/app/keys:ro
     ports:
       - "8000:8000"
 
@@ -52,4 +57,3 @@ services:
 
 volumes:
   postgres18_data:
-

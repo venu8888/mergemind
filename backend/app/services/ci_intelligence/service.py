@@ -51,7 +51,30 @@ class CIFailureService:
         if not repo:
             raise ValueError(f"Repository {repository_id} not found")
 
-        # 1. Parse logs and extract error lines / stack frames
+        # Deduplication: Check if this job has already been ingested (using job_id if present)
+        dedup_query = select(CIFailureRecord).where(
+            CIFailureRecord.repository_id == repository_id,
+        )
+        if job_id is not None:
+            dedup_query = dedup_query.where(CIFailureRecord.job_id == job_id)
+        else:
+            dedup_query = dedup_query.where(
+                CIFailureRecord.workflow_run_id == workflow_run_id,
+                CIFailureRecord.job_name == job_name,
+            )
+
+        existing = (await db.execute(dedup_query)).scalar_one_or_none()
+        if existing:
+            logger.info(
+                "CI failure already ingested for repo %s (Run %d, Job %s); returning existing record %s",
+                repository_id,
+                workflow_run_id,
+                job_id or job_name,
+                existing.id,
+            )
+            return existing
+
+        # 1. Parse logs and extract error lines / stack frames (auto-sanitizes secrets)
         parsed_data = self.parser.parse(raw_logs)
         primary_error = parsed_data["primary_error"]
         log_excerpt = parsed_data["log_excerpt"]
@@ -91,10 +114,11 @@ class CIFailureService:
         await db.refresh(record)
 
         logger.info(
-            "Ingested CI failure %s for repo %s (Run %d, Category: %s)",
+            "Ingested CI failure %s for repo %s (Run %d, Job %s, Category: %s)",
             record.id,
             repository_id,
             workflow_run_id,
+            job_id or job_name,
             failure_category,
         )
         return record

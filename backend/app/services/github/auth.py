@@ -231,3 +231,53 @@ class InstallationTokenManager:
             f"GitHub token exchange returned unexpected HTTP {response.status_code}: {response.text}",
             status_code=response.status_code,
         )
+
+
+def load_app_private_key_pem(key_path_str: str | None = None) -> bytes:
+    """Load the GitHub App private key from configured path or fallback locations."""
+    from pathlib import Path
+    from app.core.config import settings
+
+    target = key_path_str or settings.GITHUB_APP_PRIVATE_KEY_PATH
+    if not target:
+        return b""
+
+    p = Path(target)
+    if not p.is_absolute():
+        candidates = [
+            p,
+            Path(__file__).resolve().parent.parent.parent.parent / p,
+            Path(__file__).resolve().parent.parent.parent / p,
+        ]
+        for c in candidates:
+            if c.exists() and c.is_file():
+                return c.read_bytes()
+    elif p.exists() and p.is_file():
+        return p.read_bytes()
+    return b""
+
+
+_shared_token_manager: InstallationTokenManager | None = None
+
+
+def get_shared_token_manager() -> InstallationTokenManager:
+    """Retrieve or create singleton InstallationTokenManager loaded from settings."""
+    global _shared_token_manager
+    if _shared_token_manager is None:
+        from app.core.config import settings
+
+        pem = load_app_private_key_pem()
+        _shared_token_manager = InstallationTokenManager(
+            app_id=settings.GITHUB_APP_ID,
+            private_key_pem=pem,
+        )
+    return _shared_token_manager
+
+
+async def get_github_client_for_installation(installation_id: int):
+    """Convenience helper to obtain an authenticated GitHubClient for an installation ID."""
+    from app.services.github.client import GitHubClient
+
+    manager = get_shared_token_manager()
+    token = await manager.get_token(installation_id)
+    return GitHubClient(token=token, token_manager=manager)

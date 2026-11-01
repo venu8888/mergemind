@@ -256,7 +256,7 @@ async def test_github_client_methods_and_lifecycle():
         p2.json.return_value = {"total_count": 2, "repositories": [{"id": 102, "name": "r2"}]}
 
         mock_http.side_effect = [p1, p2]
-        all_repos = await client.get_installation_repositories()
+        all_repos = await client.get_installation_repositories(installation_id=123)
         assert len(all_repos) == 2
 
     # verify_webhook_signature edge conditions
@@ -285,6 +285,8 @@ async def test_github_client_methods_and_lifecycle():
 
         headers_diff = client._build_headers("application/vnd.github.diff")
         assert headers_diff["Accept"] == "application/vnd.github.diff"
+
+    await client.close()
 
 
 # --- Dispatcher Edge Cases ---

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import logging
 import random
 import time
@@ -70,7 +71,9 @@ class GitHubClient:
         path: str,
         accept: str = "application/vnd.github+json",
         params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
         installation_id: int | None = None,
+        follow_redirects: bool = False,
     ) -> httpx.Response:
         """Public request interface with token manager support."""
         if installation_id and self.token_manager:
@@ -78,7 +81,14 @@ class GitHubClient:
                 self.token = await self.token_manager.get_token(installation_id)
             elif hasattr(self.token_manager, "get_installation_token"):
                 self.token = await self.token_manager.get_installation_token(installation_id)
-        return await self._request(method=method, path=path, accept=accept, params=params)
+        return await self._request(
+            method=method,
+            path=path,
+            accept=accept,
+            params=params,
+            json_data=json_data,
+            follow_redirects=follow_redirects,
+        )
 
     async def _request(
         self,
@@ -86,6 +96,8 @@ class GitHubClient:
         path: str,
         accept: str = "application/vnd.github+json",
         params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        follow_redirects: bool = False,
     ) -> httpx.Response:
         """Executes HTTP request with rate-limit tracking and bounded jittered retries."""
         url = f"{self.base_url}/{path.lstrip('/')}"
@@ -98,6 +110,8 @@ class GitHubClient:
                     url=url,
                     headers=headers,
                     params=params,
+                    json=json_data,
+                    follow_redirects=follow_redirects,
                 )
             except (TimeoutError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
                 if attempt == self.max_retries - 1:
@@ -176,7 +190,10 @@ class GitHubClient:
                 await asyncio.sleep(backoff)
                 continue
 
-            # 4. Fail-Fast Client Errors
+            # 4. Fail-Fast Client Errors (unless handling expected 3xx redirects)
+            if response.status_code in (301, 302, 307, 308) and not follow_redirects:
+                return response
+
             if response.status_code == 401:
                 raise GitHubAuthError("GitHub authentication failed: Bad or expired credentials")
 
@@ -189,43 +206,55 @@ class GitHubClient:
                     raise GitHubRateLimitError("Rate limit exceeded")
                 raise GitHubPermissionError(f"Permission denied for {path}: {response.text}")
 
-            if response.is_error:
-                raise GitHubAPIError(
-                    f"GitHub returned HTTP {response.status_code} for {path}: {response.text}",
-                    status_code=response.status_code,
-                )
-
             return response
 
-        raise GitHubAPIError(f"Request to {path} failed after maximum retry attempts")
+        raise GitHubAPIError(f"GitHub request exceeded max retries ({self.max_retries})")
 
-    async def get_installation_repositories(self) -> list[dict[str, Any]]:
-        """Retrieves paginated list of all repositories accessible to the installation."""
-        repositories: list[dict[str, Any]] = []
-        page = 1
-        per_page = 100
+    async def get_installation(self, installation_id: int) -> dict[str, Any]:
+        """Retrieves details of an installation."""
+        response = await self._request(method="GET", path=f"/app/installations/{installation_id}")
+        return response.json()
 
-        while True:
-            response = await self._request(
-                method="GET",
-                path="/installation/repositories",
-                params={"page": page, "per_page": per_page},
-            )
-            data = response.json()
-            repos_page = data.get("repositories", [])
-            repositories.extend(repos_page)
+    async def get_installation_repositories(self, installation_id: int) -> dict[str, Any]:
+        """Retrieves repositories accessible to the installation."""
+        response = await self.request(
+            method="GET", path="/installation/repositories", installation_id=installation_id
+        )
+        return response.json()
 
-            total_count = data.get("total_count", len(repositories))
-            if len(repositories) >= total_count or not repos_page:
-                break
-            page += 1
+    async def get_repository(self, owner: str, repo: str | None = None) -> dict[str, Any]:
+        """Retrieves repository metadata."""
+        if repo is None and "/" in owner:
+            path = f"/repos/{owner}"
+        else:
+            path = f"/repos/{owner}/{repo}"
+        response = await self._request(method="GET", path=path)
+        return response.json()
 
-        return repositories
+    async def get_commit(
+        self, owner: str, repo: str | None = None, commit_sha: str | None = None
+    ) -> dict[str, Any]:
+        """Retrieves single commit by SHA."""
+        if repo is not None and commit_sha is None:
+            # Called as get_commit("owner/repo", "sha")
+            repo_full_name = owner
+            actual_sha = repo
+            if "/" in repo_full_name:
+                owner_part, repo_part = repo_full_name.split("/", 1)
+            else:
+                owner_part, repo_part = repo_full_name, repo_full_name
+            actual_path = f"/repos/{owner_part}/{repo_part}/commits/{actual_sha}"
+        elif commit_sha is not None:
+            actual_path = f"/repos/{owner}/{repo}/commits/{commit_sha}"
+        else:
+            actual_path = f"/repos/{owner}/{repo}/commits"
+        response = await self._request(method="GET", path=actual_path)
+        return response.json()
 
     async def get_pull_request(
         self, owner: str, repo: str | None = None, pull_number: int | None = None
     ) -> dict[str, Any]:
-        """Retrieves authoritative PR metadata from GitHub."""
+        """Retrieves details of a pull request."""
         if repo is None and "/" in owner and pull_number is not None:
             owner_part, repo_part = owner.split("/", 1)
             response = await self._request(
@@ -234,6 +263,38 @@ class GitHubClient:
         else:
             response = await self._request(
                 method="GET", path=f"/repos/{owner}/{repo}/pulls/{pull_number}"
+            )
+        return response.json()
+
+    async def list_pull_requests(
+        self,
+        owner: str,
+        repo: str | None = None,
+        state: str = "open",
+        per_page: int = 30,
+        page: int = 1,
+    ) -> list[dict[str, Any]]:
+        """Lists pull requests for a repository."""
+        if repo is None and "/" in owner:
+            path = f"/repos/{owner}/pulls"
+        else:
+            path = f"/repos/{owner}/{repo}/pulls"
+        params = {"state": state, "per_page": per_page, "page": page}
+        response = await self._request(method="GET", path=path, params=params)
+        return response.json()
+
+    async def get_pull_request_files(
+        self, owner: str, repo: str | None = None, pull_number: int | None = None
+    ) -> list[dict[str, Any]]:
+        """Retrieves modified files for a pull request."""
+        if repo is None and "/" in owner and pull_number is not None:
+            owner_part, repo_part = owner.split("/", 1)
+            response = await self._request(
+                method="GET", path=f"/repos/{owner_part}/{repo_part}/pulls/{pull_number}/files"
+            )
+        else:
+            response = await self._request(
+                method="GET", path=f"/repos/{owner}/{repo}/pulls/{pull_number}/files"
             )
         return response.json()
 
@@ -292,7 +353,6 @@ class GitHubClient:
     ) -> dict[str, Any]:
         """Retrieves Git tree at the given commit or tree SHA."""
         if repo is not None and tree_sha is None:
-            # Called as get_tree("owner/repo", "tree_sha")
             repo_full_name = owner
             actual_tree_sha = repo
             if "/" in repo_full_name:
@@ -318,7 +378,6 @@ class GitHubClient:
     ) -> dict[str, Any]:
         """Retrieves blob content via Git Blobs API."""
         if repo is not None and blob_sha is None:
-            # Called as get_blob("owner/repo", "blob_sha")
             repo_full_name = owner
             actual_sha = repo
             if "/" in repo_full_name:
@@ -341,7 +400,6 @@ class GitHubClient:
     ) -> bytes:
         """Retrieves raw file content at an exact immutable ref/commit SHA."""
         if "/" in owner and path is None:
-            # Called as get_raw_content("owner/repo", "path/to/file", ref="commit_sha")
             owner_part, repo_part = owner.split("/", 1)
             actual_path_arg = repo or ""
             ref_param = ref
@@ -362,3 +420,123 @@ class GitHubClient:
             params={"ref": ref_param} if ref_param else None,
         )
         return response.content
+
+    async def get_job_logs(
+        self,
+        owner: str,
+        repo: str | None = None,
+        job_id: int | str | None = None,
+    ) -> str:
+        """Download raw CI/CD job logs with secure redirect handling (stripping authorization on redirect)."""
+        if repo is None and "/" in owner and job_id is not None:
+            owner_part, repo_part = owner.split("/", 1)
+            actual_job_id = job_id
+        elif repo is not None and job_id is not None:
+            owner_part, repo_part = owner, repo
+            actual_job_id = job_id
+        else:
+            owner_part, repo_part = owner.split("/", 1) if "/" in owner else (owner, owner)
+            actual_job_id = repo
+
+        path = f"/repos/{owner_part}/{repo_part}/actions/jobs/{actual_job_id}/logs"
+
+        # Step 1: Initial request with follow_redirects=False
+        response = await self._request(method="GET", path=path, follow_redirects=False)
+
+        # Step 2: Handle 302/307 redirect to temporary signed blob storage URL
+        if response.status_code in (301, 302, 307, 308):
+            redirect_url = response.headers.get("Location")
+            if not redirect_url:
+                raise GitHubAPIError(f"Job logs returned HTTP {response.status_code} without Location header")
+
+            # CRITICAL SECURITY REQUIREMENT: Strip GitHub authorization header on redirect to cloud storage
+            async with httpx.AsyncClient(timeout=self.timeout) as unauthenticated_client:
+                storage_resp = await unauthenticated_client.get(redirect_url)
+                if storage_resp.status_code == 200:
+                    return storage_resp.text
+                raise GitHubAPIError(
+                    f"Failed to fetch redirected logs from storage: HTTP {storage_resp.status_code}",
+                    status_code=storage_resp.status_code,
+                )
+
+        if response.status_code == 200:
+            return response.text
+
+        raise GitHubAPIError(
+            f"Unexpected status when fetching job logs for job {actual_job_id}: HTTP {response.status_code}",
+            status_code=response.status_code,
+        )
+
+    async def get_branch_ref(
+        self, owner: str, repo: str | None = None, branch: str = "main"
+    ) -> dict[str, Any]:
+        """Retrieves git ref for a branch (e.g. 'heads/main')."""
+        if "/" in owner:
+            parts = owner.split("/", 1)
+            owner_part = parts[0]
+            repo_part = parts[1]
+            # If repo was provided positionally as the branch name
+            actual_branch = repo if (repo is not None and branch == "main") else branch
+        else:
+            owner_part = owner
+            repo_part = repo or ""
+            actual_branch = branch
+
+        clean_branch = actual_branch.removeprefix("refs/").removeprefix("heads/")
+        path = f"/repos/{owner_part}/{repo_part}/git/ref/heads/{clean_branch}"
+        response = await self._request(method="GET", path=path)
+        return response.json()
+
+    async def create_branch_ref(
+        self, owner: str, repo: str | None = None, new_branch: str = "", base_sha: str = ""
+    ) -> dict[str, Any]:
+        """Creates a new git branch reference from base_sha."""
+        if "/" in owner:
+            parts = owner.split("/", 1)
+            owner_part = parts[0]
+            repo_part = parts[1]
+            actual_branch = repo if (repo is not None and not new_branch) else new_branch
+            actual_sha = new_branch if (repo is not None and not base_sha) else base_sha
+        else:
+            owner_part = owner
+            repo_part = repo or ""
+            actual_branch = new_branch
+            actual_sha = base_sha
+
+        clean_branch = actual_branch.removeprefix("refs/heads/").removeprefix("refs/")
+        path = f"/repos/{owner_part}/{repo_part}/git/refs"
+        payload = {
+            "ref": f"refs/heads/{clean_branch}",
+            "sha": actual_sha,
+        }
+        response = await self._request(method="POST", path=path, json_data=payload)
+        return response.json()
+
+    async def create_or_update_file_contents(
+        self,
+        owner: str,
+        repo: str | None = None,
+        path: str = "",
+        message: str = "",
+        content_bytes: bytes = b"",
+        branch: str = "main",
+        sha: str | None = None,
+    ) -> dict[str, Any]:
+        """Commits and updates file content on a specific branch via Contents API."""
+        if repo is None and "/" in owner:
+            owner_part, repo_part = owner.split("/", 1)
+        else:
+            owner_part, repo_part = owner, repo or ""
+
+        url_path = f"/repos/{owner_part}/{repo_part}/contents/{path.lstrip('/')}"
+        b64_content = base64.b64encode(content_bytes).decode("ascii")
+        payload: dict[str, Any] = {
+            "message": message,
+            "content": b64_content,
+            "branch": branch,
+        }
+        if sha:
+            payload["sha"] = sha
+
+        response = await self._request(method="PUT", path=url_path, json_data=payload)
+        return response.json()

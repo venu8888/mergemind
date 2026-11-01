@@ -1,0 +1,50 @@
+# ==============================================================================
+# MergeMind Docker Build Context Exclusions (.dockerignore)
+# Prevents sensitive credentials, keys, and caches from entering image layers.
+# ==============================================================================
+
+# Version control
+.git/
+.gitignore
+
+# Secrets, private keys, and certificates (CRITICAL)
+**/*.pem
+**/*.key
+**/*.crt
+**/*.cer
+keys/
+backend/keys/
+.env*
+!.env.example
+
+# Python runtime artifacts & caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# Node & Frontend build artifacts
+node_modules/
+frontend/dist/

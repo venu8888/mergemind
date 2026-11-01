@@ -50,6 +50,9 @@ def upgrade() -> None:
         sa.Column("summary_metrics", sa.JSON(), nullable=True),
         sa.Column("status", sa.String(length=32), nullable=False, server_default="PENDING"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.create_index("ix_repo_health_repo_id", "repository_health_assessments", ["repository_id"])

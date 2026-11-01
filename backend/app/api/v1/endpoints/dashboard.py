@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -224,11 +226,13 @@ async def post_merge_reassess(
     """Execute fresh whole-repo assessment post-merge and update repository health score."""
     engine = RepositoryHealthService()
     try:
+        source_dir = os.getcwd()
         assessment = await engine.assess_repository(
             db=db,
             repository_id=id,
             commit_sha=commit_sha,
             branch_name=branch,
+            source_dir=source_dir,
         )
         return HealthAssessmentResponse.model_validate(assessment)
     except ValueError as exc:

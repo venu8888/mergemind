@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.core.security import sanitize_secret
+from app.core.security import sanitize_log_output, sanitize_secret
 
 
 @dataclass
@@ -36,13 +36,13 @@ class RemediationContext:
             repository_name=self.repository_name,
             target_commit_sha=self.target_commit_sha,
             target_branch=self.target_branch,
-            error_message=sanitize_secret(self.error_message),
+            error_message=sanitize_log_output(self.error_message),
             failure_category=self.failure_category,
             target_file=self.target_file,
             target_line=self.target_line,
             enclosing_symbol=self.enclosing_symbol,
-            code_snippet=sanitize_secret(self.code_snippet) if self.code_snippet else None,
-            log_excerpt=sanitize_secret(self.log_excerpt) if self.log_excerpt else None,
+            code_snippet=sanitize_log_output(self.code_snippet) if self.code_snippet else None,
+            log_excerpt=sanitize_log_output(self.log_excerpt) if self.log_excerpt else None,
             ci_failure_id=self.ci_failure_id,
             finding_id=self.finding_id,
             pull_request_id=self.pull_request_id,
@@ -64,6 +64,7 @@ class RemediationResult:
     confidence_score: float = 0.85
     is_valid_diff: bool = True
     validation_error: str | None = None
+    token_usage: dict[str, int] = field(default_factory=dict)
 
 
 class BaseRemediationProvider(ABC):

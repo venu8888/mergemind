@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +26,14 @@ class RemediationService:
     """Orchestrates generation, validation, and storage of reviewable code remediations."""
 
     def __init__(self, provider: BaseRemediationProvider | None = None):
-        self.provider = provider or MockRemediationProvider()
+        if provider is not None:
+            self.provider = provider
+        elif os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
+            from app.services.remediation.llm_provider import LLMRemediationProvider
+
+            self.provider = LLMRemediationProvider()
+        else:
+            self.provider = MockRemediationProvider()
 
     async def propose_for_ci_failure(
         self,
@@ -38,6 +46,21 @@ class RemediationService:
         ).scalar_one_or_none()
         if not failure:
             raise ValueError(f"CI failure record {failure_id} not found")
+
+        # Optimization: Reuse existing proposal if already generated for this failure
+        existing = (
+            await db.execute(
+                select(RemediationProposal)
+                .where(
+                    RemediationProposal.ci_failure_id == failure_id,
+                    RemediationProposal.status.in_(["PROPOSED", "VERIFIED", "PR_CREATED"]),
+                )
+                .order_by(desc(RemediationProposal.created_at))
+            )
+        ).scalar_one_or_none()
+        if existing:
+            logger.info("Reusing existing proposal %s for CI failure %s", existing.id, failure_id)
+            return existing
 
         repo = (
             await db.execute(select(Repository).where(Repository.id == failure.repository_id))
@@ -69,6 +92,13 @@ class RemediationService:
 
         res: RemediationResult = await self.provider.generate_proposal(context)
 
+        evidence_payload = {
+            "ci_failure_id": failure.id,
+            "error": failure.error_message,
+        }
+        if res.token_usage:
+            evidence_payload["token_usage"] = res.token_usage
+
         proposal = RemediationProposal(
             repository_id=failure.repository_id,
             ci_failure_id=failure.id,
@@ -84,7 +114,7 @@ class RemediationService:
             patch_diff=res.patch_diff,
             affected_files=res.affected_files,
             rationale=res.rationale,
-            evidence_records={"ci_failure_id": failure.id, "error": failure.error_message},
+            evidence_records=evidence_payload,
         )
         db.add(proposal)
 
@@ -94,10 +124,11 @@ class RemediationService:
         await db.refresh(proposal)
 
         logger.info(
-            "Created remediation proposal %s for CI failure %s (Provider: %s)",
+            "Created remediation proposal %s for CI failure %s (Provider: %s, Model: %s)",
             proposal.id,
             failure.id,
             res.provider_name,
+            res.model_identifier,
         )
         return proposal
 
@@ -112,6 +143,21 @@ class RemediationService:
         ).scalar_one_or_none()
         if not finding:
             raise ValueError(f"Finding {finding_id} not found")
+
+        # Optimization: Reuse existing proposal if already generated for this finding
+        existing = (
+            await db.execute(
+                select(RemediationProposal)
+                .where(
+                    RemediationProposal.finding_id == finding_id,
+                    RemediationProposal.status.in_(["PROPOSED", "VERIFIED", "PR_CREATED"]),
+                )
+                .order_by(desc(RemediationProposal.created_at))
+            )
+        ).scalar_one_or_none()
+        if existing:
+            logger.info("Reusing existing proposal %s for finding %s", existing.id, finding_id)
+            return existing
 
         repo = (
             await db.execute(select(Repository).where(Repository.id == finding.repository_id))
@@ -135,6 +181,13 @@ class RemediationService:
 
         res: RemediationResult = await self.provider.generate_proposal(context)
 
+        evidence_payload = {
+            "finding_id": finding.id,
+            "rule_id": finding.rule_id,
+        }
+        if res.token_usage:
+            evidence_payload["token_usage"] = res.token_usage
+
         proposal = RemediationProposal(
             repository_id=finding.repository_id,
             finding_id=finding.id,
@@ -150,16 +203,17 @@ class RemediationService:
             patch_diff=res.patch_diff,
             affected_files=res.affected_files,
             rationale=res.rationale,
-            evidence_records={"finding_id": finding.id, "rule_id": finding.rule_id},
+            evidence_records=evidence_payload,
         )
         db.add(proposal)
         await db.commit()
         await db.refresh(proposal)
 
         logger.info(
-            "Created remediation proposal %s for finding %s",
+            "Created remediation proposal %s for finding %s (Provider: %s)",
             proposal.id,
             finding.id,
+            res.provider_name,
         )
         return proposal
 
