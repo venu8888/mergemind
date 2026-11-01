@@ -108,8 +108,10 @@ def test_scorer_distinguishes_infra_failure_from_code_defects(scorer):
     )
 
     out = scorer.evaluate(cq, sec, dep, test, maint)
-    # CQ is TIMEOUT -> dimension_status is FAILED_DEPENDENCY, sub_score is 0.0
+    # CQ is TIMEOUT -> dimension_status is FAILED_DEPENDENCY, sub_score is None (not 0.0 code defect)
     assert out.dimension_status["code_quality"] == "FAILED_DEPENDENCY"
+    assert out.code_quality_score is None
+    assert out.assessment_completeness == 75.0
     assert out.is_qualified is False
 
 

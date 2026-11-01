@@ -70,11 +70,17 @@ async def get_pr_verification(
     db: AsyncSession = Depends(get_db),
 ) -> PRVerificationResponse:
     """Retrieve the latest verification assessment and gate verdict for a pull request."""
+    # Verify repository ownership
+    repo = (await db.execute(select(Repository).where(Repository.id == id))).scalar_one_or_none()
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository {id} not found",
+        )
+
     # Find PR
-    pr_stmt = (
-        select(PullRequest)
-        .join(Repository, PullRequest.repository_id == Repository.id)
-        .where(Repository.id == id, PullRequest.pr_number == number)
+    pr_stmt = select(PullRequest).where(
+        PullRequest.repository_id == id, PullRequest.pr_number == number
     )
     pr = (await db.execute(pr_stmt)).scalar_one_or_none()
     if not pr:
@@ -113,6 +119,14 @@ async def trigger_pr_verification(
     db: AsyncSession = Depends(get_db),
 ) -> PRVerificationResponse:
     """Trigger a complete verification pipeline for a PR commit."""
+    # Verify repository ownership
+    repo = (await db.execute(select(Repository).where(Repository.id == id))).scalar_one_or_none()
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository {id} not found",
+        )
+
     service = PRVerificationService()
     target_sha = payload.commit_sha if payload else None
 

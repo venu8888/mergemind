@@ -22,6 +22,7 @@ from app.services.analysis.runners.bandit_runner import BanditRunner
 from app.services.analysis.runners.pip_audit_runner import PipAuditRunner
 from app.services.analysis.runners.radon_runner import RadonRunner
 from app.services.analysis.runners.ruff_runner import RuffRunner
+from app.services.github.client import GitHubClient
 from app.services.github.diff_parser import DiffParser, FileDiff
 from app.services.sandbox.pytest_runner import PytestSandboxRunner
 from app.services.verification.applicability import determine_applicable_checks
@@ -54,6 +55,7 @@ class PRVerificationService:
         radon_runner: RadonRunner | None = None,
         classifier: FindingDeltaClassifier | None = None,
         quality_gate: PRQualityGateEvaluator | None = None,
+        github_client: GitHubClient | None = None,
     ):
         self.ruff = ruff_runner or RuffRunner()
         self.bandit = bandit_runner or BanditRunner()
@@ -62,6 +64,7 @@ class PRVerificationService:
         self.radon = radon_runner or RadonRunner()
         self.classifier = classifier or FindingDeltaClassifier()
         self.quality_gate = quality_gate or PRQualityGateEvaluator()
+        self.github_client = github_client
 
     async def verify_pull_request(
         self,
@@ -83,7 +86,7 @@ class PRVerificationService:
         """Execute full verification pipeline for a pull request."""
         # 1. Fetch Repository and PullRequest
         stmt = (
-            select(PullRequest)
+            select(PullRequest, Repository)
             .join(Repository, PullRequest.repository_id == Repository.id)
             .where(
                 Repository.id == repository_id,
@@ -91,15 +94,31 @@ class PRVerificationService:
             )
         )
         result = await db.execute(stmt)
-        pr = result.scalar_one_or_none()
-        if not pr:
+        row = result.first()
+        if not row:
             raise ValueError(f"Pull request #{pr_number} not found for repository {repository_id}")
+        pr, repo = row[0], row[1]
 
         target_commit_sha = commit_sha or pr.current_head_sha
 
         # 2. Extract changed files and diff structure
         parsed_diff_files: list[FileDiff] = diff_files or []
         effective_changed_files = list(changed_files) if changed_files is not None else []
+
+        # If diff_content is not provided and github_client is available, retrieve live diff
+        if not diff_content and not parsed_diff_files and self.github_client and repo.full_name:
+            try:
+                diff_content = await self.github_client.get_pull_request_diff(
+                    owner=repo.full_name,
+                    pull_number=pr_number,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Could not retrieve live diff from GitHub for %s#%d: %s",
+                    repo.full_name,
+                    pr_number,
+                    exc,
+                )
 
         if diff_content and not parsed_diff_files:
             parser = DiffParser()

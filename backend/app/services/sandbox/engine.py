@@ -48,6 +48,49 @@ class SandboxEngine:
         docker_bin = shutil.which("docker")
         return docker_bin is not None
 
+    def build_docker_command(
+        self,
+        workspace_dir: str,
+        command: list[str],
+        env: dict[str, str] | None = None,
+    ) -> list[str]:
+        """Construct hardened, non-root, read-only Docker execution arguments."""
+        docker_bin = shutil.which("docker") or "docker"
+        normalized_workspace = os.path.abspath(workspace_dir)
+
+        docker_cmd = [
+            docker_bin,
+            "run",
+            "--rm",
+            "--read-only",
+            "--user",
+            "10001:10001",
+            "--network",
+            "none",
+            "--memory",
+            f"{self.memory_mb}m",
+            f"--cpus={self.cpu_quota}",
+            "--security-opt",
+            "no-new-privileges:true",
+            "--cap-drop",
+            "ALL",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=128m",  # nosec B108
+            "-v",
+            f"{normalized_workspace}:/workspace:rw",
+            "-w",
+            "/workspace",
+        ]
+
+        # Inject non-sensitive environment variables
+        if env:
+            for k, v in env.items():
+                docker_cmd.extend(["-e", f"{k}={v}"])
+
+        docker_cmd.append(self.image)
+        docker_cmd.extend(command)
+        return docker_cmd
+
     async def execute_in_container(
         self,
         workspace_dir: str,
@@ -58,6 +101,8 @@ class SandboxEngine:
 
         Enforces strict fail-closed security:
         - Never executes on the host as a fallback.
+        - Runs as non-root UID 10001:10001.
+        - Mounts root filesystem as read-only (--read-only).
         - Mounts workspace with read/write access restricted to the isolated sandbox container.
         - Drops all Linux capabilities and prevents privilege escalation.
         - Network disabled (--network none).
@@ -86,37 +131,7 @@ class SandboxEngine:
             )
 
         # 3. Construct hardened docker run arguments
-        # Workspace path normalization for cross-platform mounts
-        normalized_workspace = os.path.abspath(workspace_dir)
-
-        docker_cmd = [
-            docker_bin,
-            "run",
-            "--rm",
-            "--network",
-            "none",
-            "--memory",
-            f"{self.memory_mb}m",
-            f"--cpus={self.cpu_quota}",
-            "--security-opt",
-            "no-new-privileges:true",
-            "--cap-drop",
-            "ALL",
-            "--tmpfs",
-            "/tmp:rw,noexec,nosuid,size=128m",  # nosec B108
-            "-v",
-            f"{normalized_workspace}:/workspace:rw",
-            "-w",
-            "/workspace",
-        ]
-
-        # Inject non-sensitive environment variables
-        if env:
-            for k, v in env.items():
-                docker_cmd.extend(["-e", f"{k}={v}"])
-
-        docker_cmd.append(self.image)
-        docker_cmd.extend(command)
+        docker_cmd = self.build_docker_command(workspace_dir, command, env)
 
         try:
             proc = await asyncio.create_subprocess_exec(

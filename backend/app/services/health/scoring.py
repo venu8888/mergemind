@@ -70,7 +70,7 @@ class RepositoryHealthScorer:
             sub_scores["code_quality"] = None
         elif code_quality_res.status in (CheckStatus.UNAVAILABLE, CheckStatus.TIMEOUT):
             dimension_status["code_quality"] = "FAILED_DEPENDENCY"
-            sub_scores["code_quality"] = 0.0
+            sub_scores["code_quality"] = None
         else:
             dimension_status["code_quality"] = "ENABLED"
             errs = code_quality_res.metrics.get("errors_count", 0)
@@ -86,7 +86,7 @@ class RepositoryHealthScorer:
             sub_scores["security"] = None
         elif security_res.status in (CheckStatus.UNAVAILABLE, CheckStatus.TIMEOUT):
             dimension_status["security"] = "FAILED_DEPENDENCY"
-            sub_scores["security"] = 0.0
+            sub_scores["security"] = None
         else:
             dimension_status["security"] = "ENABLED"
             crit = security_res.metrics.get("critical", 0)
@@ -104,7 +104,7 @@ class RepositoryHealthScorer:
             sub_scores["dependencies"] = None
         elif dependency_res.status in (CheckStatus.UNAVAILABLE, CheckStatus.TIMEOUT):
             dimension_status["dependencies"] = "FAILED_DEPENDENCY"
-            sub_scores["dependencies"] = 0.0
+            sub_scores["dependencies"] = None
         else:
             dimension_status["dependencies"] = "ENABLED"
             cve_crit_high = dependency_res.metrics.get("cve_critical_high", 0)
@@ -119,7 +119,7 @@ class RepositoryHealthScorer:
             sub_scores["test_health"] = None
         elif test_health_res.status in (CheckStatus.UNAVAILABLE, CheckStatus.TIMEOUT):
             dimension_status["test_health"] = "FAILED_DEPENDENCY"
-            sub_scores["test_health"] = 0.0
+            sub_scores["test_health"] = None
         else:
             dimension_status["test_health"] = "ENABLED"
             tests_failed = test_health_res.metrics.get("tests_failed", 0)
@@ -142,7 +142,7 @@ class RepositoryHealthScorer:
             sub_scores["maintainability"] = None
         elif maintainability_res.status in (CheckStatus.UNAVAILABLE, CheckStatus.TIMEOUT):
             dimension_status["maintainability"] = "FAILED_DEPENDENCY"
-            sub_scores["maintainability"] = 0.0
+            sub_scores["maintainability"] = None
         else:
             dimension_status["maintainability"] = "ENABLED"
             doc_cov = maintainability_res.metrics.get("docstring_coverage_pct", 100.0)

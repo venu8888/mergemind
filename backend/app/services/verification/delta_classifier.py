@@ -124,8 +124,18 @@ class FindingDeltaClassifier:
                 continue
 
             # Match attempt 2: Same rule and same file with line shift
+            # If the file is heavily modified (>5 chunks), line shifts cannot be established with confidence.
+            is_heavily_modified = diff_files and any(
+                (getattr(fd, "new_path", None) or getattr(fd, "target_path", None)) == hf.file_path
+                and len(getattr(fd, "chunks", [])) > 5
+                for fd in diff_files
+            )
             rule_file_key = (hf.rule_id, hf.file_path)
-            if rule_file_key in base_by_rule_file and base_by_rule_file[rule_file_key]:
+            if (
+                not is_heavily_modified
+                and rule_file_key in base_by_rule_file
+                and base_by_rule_file[rule_file_key]
+            ):
                 candidates = base_by_rule_file[rule_file_key]
                 best_match = None
                 for c in candidates:
