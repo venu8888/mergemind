@@ -109,11 +109,14 @@ async def test_sandbox_zero_host_execution_fallback():
 
 @pytest.mark.asyncio
 async def test_sandbox_hard_execution_timeout():
-    """Verify that container execution exceeding timeout_seconds is terminated."""
+    """Verify that container execution exceeding timeout_seconds is terminated and cleaned up."""
     engine = SandboxEngine(timeout_seconds=1)
     mock_p = MagicMock()
     mock_p.kill = MagicMock()
     mock_p.wait = AsyncMock()
+    mock_p.communicate = AsyncMock(return_value=(b"", b""))
+    mock_p.returncode = 1  # For inspect: non-zero means container does not exist (success)
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Simulate timeout by patching asyncio.wait_for to raise TimeoutError
         with (
@@ -125,6 +128,9 @@ async def test_sandbox_hard_execution_timeout():
             assert res.timed_out is True
             assert res.exit_code in (-1, 124)
             assert "Timeout after 1s" in (res.error or "")
+            assert res.container_cleaned is True
+            assert res.container_id is not None
+            assert res.container_id.startswith("mergemind-sbx-")
 
 
 def test_sandbox_timeout_clamped_to_global_maximum():
@@ -140,21 +146,151 @@ def test_sandbox_timeout_clamped_to_global_maximum():
 
 
 @pytest.mark.asyncio
-async def test_sandbox_timeout_terminates_container_process():
-    """Verify that a timed-out execution explicitly kills the underlying container process."""
-    engine = SandboxEngine(timeout_seconds=2)
+async def test_sandbox_normal_execution_and_cleanup():
+    """Verify normal execution life-cycle: container is uniquely named, executes, and cleans up cleanly."""
+    engine = SandboxEngine(timeout_seconds=30)
     mock_proc = MagicMock()
-    mock_proc.kill = MagicMock()
-    mock_proc.wait = AsyncMock()
+    mock_proc.returncode = 0
+    mock_proc.wait = AsyncMock(return_value=0)
+    mock_proc.communicate = AsyncMock(return_value=(b"Execution completed successfully\n", b""))
+
+    mock_exec = AsyncMock(return_value=mock_proc)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with (
             patch("shutil.which", return_value="/fake/docker"),
-            patch("asyncio.create_subprocess_exec", return_value=mock_proc),
+            patch("asyncio.create_subprocess_exec", mock_exec),
+        ):
+            res = await engine.execute_in_container(tmpdir, ["pytest", "-v"])
+            assert res.exit_code == 0
+            assert res.timed_out is False
+            assert res.container_cleaned is True
+            assert res.container_id is not None
+            assert res.container_id.startswith("mergemind-sbx-")
+            assert res.stdout.startswith("Exec")
+
+            # Verify that --name was passed in the docker command
+            cmd_args = mock_exec.call_args.args
+            assert "--name" in cmd_args
+            name_idx = cmd_args.index("--name")
+            assert cmd_args[name_idx + 1] == res.container_id
+
+
+@pytest.mark.asyncio
+async def test_sandbox_timeout_with_successful_container_termination():
+    """Verify complete timeout lifecycle: host process is killed, docker kill/rm/inspect are executed."""
+    engine = SandboxEngine(timeout_seconds=2)
+    proc_run = MagicMock()
+    proc_run.kill = MagicMock()
+    proc_run.wait = AsyncMock(return_value=0)
+
+    proc_kill = MagicMock()
+    proc_kill.communicate = AsyncMock(return_value=(b"", b""))
+
+    proc_rm = MagicMock()
+    proc_rm.communicate = AsyncMock(return_value=(b"", b""))
+
+    proc_inspect = MagicMock()
+    # returncode = 1 indicates container does not exist (successfully purged)
+    proc_inspect.returncode = 1
+    proc_inspect.communicate = AsyncMock(return_value=(b"", b"Error: No such container"))
+
+    executed_subprocesses = []
+
+    def subprocess_router(*args, **kwargs):
+        executed_subprocesses.append(list(args))
+        if "kill" in args:
+            return proc_kill
+        elif "rm" in args:
+            return proc_rm
+        elif "inspect" in args:
+            return proc_inspect
+        return proc_run
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with (
+            patch("shutil.which", return_value="/fake/docker"),
+            patch("asyncio.create_subprocess_exec", side_effect=subprocess_router),
+            patch("asyncio.wait_for", side_effect=TimeoutError()),
+        ):
+            res = await engine.execute_in_container(tmpdir, ["sleep", "60"])
+
+            # 1. Host process termination
+            proc_run.kill.assert_called_once()
+            proc_run.wait.assert_awaited_once()
+
+            # 2. Daemon-level container termination and removal
+            assert res.timed_out is True
+            assert res.container_cleaned is True
+            assert res.container_id is not None
+
+            # 3. Verify kill, rm, and inspect commands were dispatched with container_id
+            cmd_names = [call[1] for call in executed_subprocesses if len(call) > 1]
+            assert "run" in cmd_names
+            assert "kill" in cmd_names
+            assert "rm" in cmd_names
+            assert "inspect" in cmd_names
+
+            for call in executed_subprocesses:
+                if len(call) > 1 and call[1] in ("kill", "rm", "inspect"):
+                    assert res.container_id in call
+
+
+@pytest.mark.asyncio
+async def test_sandbox_timeout_with_container_cleanup_failure():
+    """Verify that if a container cannot be removed, failure is reported and logged."""
+    engine = SandboxEngine(timeout_seconds=2)
+    proc_run = MagicMock()
+    proc_run.kill = MagicMock()
+    proc_run.wait = AsyncMock(return_value=0)
+
+    proc_kill = MagicMock()
+    proc_kill.communicate = AsyncMock(return_value=(b"", b""))
+
+    proc_rm = MagicMock()
+    proc_rm.communicate = AsyncMock(return_value=(b"", b""))
+
+    proc_inspect = MagicMock()
+    # returncode = 0 indicates container is STILL present (removal failed)
+    proc_inspect.returncode = 0
+    proc_inspect.communicate = AsyncMock(return_value=(b"{}", b""))
+
+    def subprocess_router(*args, **kwargs):
+        if "kill" in args:
+            return proc_kill
+        elif "rm" in args:
+            return proc_rm
+        elif "inspect" in args:
+            return proc_inspect
+        return proc_run
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with (
+            patch("shutil.which", return_value="/fake/docker"),
+            patch("asyncio.create_subprocess_exec", side_effect=subprocess_router),
             patch("asyncio.wait_for", side_effect=TimeoutError()),
         ):
             res = await engine.execute_in_container(tmpdir, ["sleep", "60"])
             assert res.timed_out is True
-            # Verified process termination
-            mock_proc.kill.assert_called_once()
-            mock_proc.wait.assert_awaited_once()
+            # Cleanup was flagged as failed
+            assert res.container_cleaned is False
+            assert "Container cleanup failed" in (res.error or "")
+            assert "Warning: container cleanup failed" in res.stderr
+
+
+@pytest.mark.asyncio
+async def test_sandbox_docker_daemon_unavailable():
+    """Verify that if the Docker daemon cannot be contacted, execution fails closed without host fallback."""
+    engine = SandboxEngine()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with (
+            patch("shutil.which", return_value="/fake/docker"),
+            patch(
+                "asyncio.create_subprocess_exec",
+                side_effect=OSError("Cannot connect to the Docker daemon"),
+            ),
+        ):
+            res = await engine.execute_in_container(tmpdir, ["pytest"])
+            assert res.exit_code == -1
+            assert "Cannot connect to the Docker daemon" in (res.error or "")
+            assert res.timed_out is False
