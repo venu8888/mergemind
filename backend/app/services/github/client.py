@@ -119,7 +119,7 @@ class GitHubClient:
                         f"GitHub request timed out after {self.max_retries} attempts: {exc}",
                         status_code=408,
                     ) from exc
-                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.4)
+                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.4)  # nosec B311
                 await asyncio.sleep(backoff)
                 continue
             except httpx.ConnectError as exc:
@@ -127,7 +127,7 @@ class GitHubClient:
                     raise GitHubAPIError(
                         f"GitHub connection failed after {self.max_retries} attempts: {exc}"
                     ) from exc
-                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.4)
+                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.4)  # nosec B311
                 logger.warning(
                     f"Transient network error on {method} {path}: {exc}. Retrying in {backoff:.2f}s"
                 )
@@ -183,7 +183,7 @@ class GitHubClient:
                         f"GitHub server error {response.status_code} after {self.max_retries} retries",
                         status_code=response.status_code,
                     )
-                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.5)
+                backoff = (2**attempt) * 0.5 + random.uniform(0.1, 0.5)  # nosec B311
                 logger.warning(
                     f"GitHub HTTP {response.status_code} on {path}. Retrying in {backoff:.2f}s"
                 )
@@ -447,7 +447,9 @@ class GitHubClient:
         if response.status_code in (301, 302, 307, 308):
             redirect_url = response.headers.get("Location")
             if not redirect_url:
-                raise GitHubAPIError(f"Job logs returned HTTP {response.status_code} without Location header")
+                raise GitHubAPIError(
+                    f"Job logs returned HTTP {response.status_code} without Location header"
+                )
 
             # CRITICAL SECURITY REQUIREMENT: Strip GitHub authorization header on redirect to cloud storage
             async with httpx.AsyncClient(timeout=self.timeout) as unauthenticated_client:

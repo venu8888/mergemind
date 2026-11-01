@@ -28,7 +28,11 @@ class RemediationService:
     def __init__(self, provider: BaseRemediationProvider | None = None):
         if provider is not None:
             self.provider = provider
-        elif os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
+        elif (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+            or os.getenv("ANTHROPIC_API_KEY")
+        ):
             from app.services.remediation.llm_provider import LLMRemediationProvider
 
             self.provider = LLMRemediationProvider()

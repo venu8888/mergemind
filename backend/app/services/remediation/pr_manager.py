@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
-from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -108,12 +107,17 @@ class RemediationPRManager:
                     await client.get_branch_ref(repo.full_name, branch_name)
                     logger.info("Branch %s already exists on %s", branch_name, repo.full_name)
                 except Exception:
-                    logger.info("Creating corrective branch %s from %s (%s)", branch_name, target_base, base_sha[:8])
+                    logger.info(
+                        "Creating corrective branch %s from %s (%s)",
+                        branch_name,
+                        target_base,
+                        base_sha[:8],
+                    )
                     await client.create_branch_ref(repo.full_name, branch_name, base_sha)
 
                 # 3. Apply patch locally and push updated file contents to the branch
                 with tempfile.TemporaryDirectory() as tmp_dir:
-                    for rel_file in (proposal.affected_files or []):
+                    for rel_file in proposal.affected_files or []:
                         try:
                             file_bytes = await client.get_raw_content(
                                 repo.full_name, rel_file, ref=branch_name
@@ -128,7 +132,7 @@ class RemediationPRManager:
                     # Apply unified diff
                     diff_applied, diff_err = apply_unified_diff(tmp_dir, proposal.patch_diff)
                     if diff_applied:
-                        for rel_file in (proposal.affected_files or []):
+                        for rel_file in proposal.affected_files or []:
                             local_f = os.path.join(tmp_dir, rel_file)
                             if os.path.exists(local_f):
                                 with open(local_f, "rb") as f:
@@ -142,10 +146,12 @@ class RemediationPRManager:
                                         if t_item.get("path") == rel_file:
                                             current_blob_sha = t_item.get("sha")
                                             break
-                                except Exception:
-                                    pass
+                                except Exception as exc:  # nosec B110
+                                    logger.debug("Existing blob SHA resolution skipped: %s", exc)
 
-                                logger.info("Committing patched file %s to %s", rel_file, branch_name)
+                                logger.info(
+                                    "Committing patched file %s to %s", rel_file, branch_name
+                                )
                                 await client.create_or_update_file_contents(
                                     owner=repo.full_name,
                                     path=rel_file,
@@ -156,7 +162,12 @@ class RemediationPRManager:
                                 )
 
                 # 4. Open genuine draft Pull Request on GitHub
-                logger.info("Opening GitHub Draft Pull Request on %s (%s -> %s)", repo.full_name, branch_name, target_base)
+                logger.info(
+                    "Opening GitHub Draft Pull Request on %s (%s -> %s)",
+                    repo.full_name,
+                    branch_name,
+                    target_base,
+                )
                 pr_data = await client.create_pull_request(
                     owner=repo.full_name,
                     title=f"[MergeMind] {proposal.title}",
@@ -167,7 +178,9 @@ class RemediationPRManager:
                 )
                 pr_number = pr_data.get("number", pr_number)
                 pr_url = pr_data.get("html_url", pr_url)
-                logger.info("Successfully created live GitHub Draft PR #%d at %s", pr_number, pr_url)
+                logger.info(
+                    "Successfully created live GitHub Draft PR #%d at %s", pr_number, pr_url
+                )
             except Exception as exc:
                 logger.warning(
                     "Could not create live GitHub PR for %s (using simulated record): %s",

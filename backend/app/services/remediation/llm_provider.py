@@ -153,7 +153,9 @@ class LLMRemediationProvider(BaseRemediationProvider):
                         )
                         return result
                     else:
-                        logger.warning("LLM generated invalid diff (%s); falling back to rule engine", val_err)
+                        logger.warning(
+                            "LLM generated invalid diff (%s); falling back to rule engine", val_err
+                        )
 
             logger.warning(
                 "External LLM API returned status %s or invalid diff; using fallback",

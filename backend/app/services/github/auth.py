@@ -236,6 +236,7 @@ class InstallationTokenManager:
 def load_app_private_key_pem(key_path_str: str | None = None) -> bytes:
     """Load the GitHub App private key from configured path or fallback locations."""
     from pathlib import Path
+
     from app.core.config import settings
 
     target = key_path_str or settings.GITHUB_APP_PRIVATE_KEY_PATH

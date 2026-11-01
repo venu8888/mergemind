@@ -91,7 +91,9 @@ class WebhookDispatcher:
             # Detect genuine merged PRs and trigger fresh repository health assessment.
             action = payload.get("action")
             pr_data = payload.get("pull_request") or {}
-            is_merged = pr_data.get("merged") is True or (action == "closed" and pr_data.get("merged") is True)
+            is_merged = pr_data.get("merged") is True or (
+                action == "closed" and pr_data.get("merged") is True
+            )
 
             if is_merged:
                 repo_data = payload.get("repository", {})
@@ -113,10 +115,9 @@ class WebhookDispatcher:
 
                         health_service = RepositoryHealthService()
                         base_branch = pr_data.get("base", {}).get("ref", "main")
-                        merge_commit_sha = (
-                            pr_data.get("merge_commit_sha")
-                            or pr_data.get("head", {}).get("sha", "")
-                        )
+                        merge_commit_sha = pr_data.get("merge_commit_sha") or pr_data.get(
+                            "head", {}
+                        ).get("sha", "")
 
                         await health_service.assess_repository(
                             repository_id=repo.id,

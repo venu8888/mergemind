@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.core.security import sanitize_log_output, sanitize_secret
+from app.core.security import sanitize_log_output
 
 
 @dataclass
