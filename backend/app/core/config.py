@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     SANDBOX_MAX_MEMORY_MB: int = Field(default=512, ge=64, le=2048)
     SANDBOX_CPU_QUOTA: float = Field(default=1.0, ge=0.25, le=4.0)
 
+    # Durable Webhook Queue Worker
+    ENABLE_IN_PROCESS_WORKER: bool = Field(
+        default=False,
+        description="Whether to run the durable webhook queue worker loop inside the web process",
+    )
+
     # Quality Gate & Scoring Engine
     SCORING_POLICY_VERSION: str = "v1.0"
 

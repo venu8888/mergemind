@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Persistence Database
+  # PostgreSQL 18 Persistence Database
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: mergemind-db
     restart: unless-stopped
     environment:
@@ -13,7 +11,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres18_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d mergemind"]
       interval: 10s
@@ -36,6 +34,7 @@ services:
       ENVIRONMENT: development
       DEBUG: "true"
       SANDBOX_TYPE: container
+      ENABLE_IN_PROCESS_WORKER: "true"
     ports:
       - "8000:8000"
 
@@ -52,5 +51,5 @@ services:
       - "3000:80"
 
 volumes:
-  postgres_data:
+  postgres18_data:
 

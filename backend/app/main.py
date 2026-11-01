@@ -1,5 +1,6 @@
 """MergeMind Backend Application Entrypoint."""
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -9,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.database import check_db_connection
+from app.worker import run_worker_loop
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -28,8 +30,27 @@ async def lifespan(app: FastAPI):
         logger.info("Database connection successfully established.")
     else:
         logger.warning("Database connection failed or not yet reachable.")
+
+    # Start in-process queue worker if explicitly enabled
+    worker_task = None
+    worker_stop = asyncio.Event()
+    if settings.ENABLE_IN_PROCESS_WORKER:
+        logger.info("Starting in-process background webhook queue worker...")
+        worker_task = asyncio.create_task(
+            run_worker_loop(poll_interval=2.0, stop_event=worker_stop)
+        )
+
     yield
+
     logger.info(f"Shutting down {settings.PROJECT_NAME}")
+    if worker_task:
+        logger.info("Stopping in-process queue worker task...")
+        worker_stop.set()
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(

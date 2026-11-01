@@ -48,6 +48,10 @@ def cleanup_test_db():
             except Exception:
                 pass
     yield
+    try:
+        engine.sync_engine.dispose()
+    except Exception:
+        pass
     for db_file in [Path("./test_mergemind.db"), Path("backend/test_mergemind.db")]:
         if db_file.exists():
             try:
