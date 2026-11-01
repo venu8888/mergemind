@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install Backend Dependencies
         run: |
@@ -40,7 +43,7 @@ jobs:
       - name: Execute Automated Backend Test Suite (Pytest)
         run: |
           cd backend
-          python -m pytest -v --cov=app --cov-report=term-missing
+          python -m pytest tests -v --cov=app --cov-report=term-missing
 
   frontend-checks:
     name: Frontend TypeScript & Production Build
