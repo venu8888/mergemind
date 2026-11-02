@@ -208,7 +208,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="flex items-baseline gap-3">
             <span className="text-4xl font-extrabold text-white">
               {health?.assessment_completeness !== undefined && health?.assessment_completeness !== null
-                ? `${Math.round(health.assessment_completeness * 100)}%`
+                ? `${Math.round(health.assessment_completeness <= 1 ? health.assessment_completeness * 100 : health.assessment_completeness)}%`
                 : '—'}
             </span>
           </div>
@@ -224,7 +224,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="flex items-baseline gap-3">
             <span className="text-4xl font-extrabold text-white">
               {health?.check_availability !== undefined && health?.check_availability !== null
-                ? `${Math.round(health.check_availability * 100)}%`
+                ? `${Math.round(health.check_availability <= 1 ? health.check_availability * 100 : health.check_availability)}%`
                 : '100%'}
             </span>
           </div>
@@ -301,18 +301,21 @@ export const HealthView: React.FC<HealthViewProps> = ({
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
                     <Code2 className="w-4 h-4" />
                   </div>
-                  <div className="text-sm font-semibold text-white">Code Quality (Ruff)</div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Code Quality (Ruff)</div>
+                    <div className="text-xs text-slate-400">Weight: 25%</div>
+                  </div>
                 </div>
-                {getAvailabilityBadge('ENABLED')}
+                {getAvailabilityBadge(health?.dimension_status?.code_quality || 'ENABLED')}
               </div>
-              <div className="text-xl font-bold text-white">{health?.code_quality_score ?? '—'} / 100</div>
+              <div className="text-xl font-bold text-white">{health?.code_quality_score !== null && health?.code_quality_score !== undefined ? `${Math.round(health.code_quality_score)} / 100` : '—'}</div>
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
@@ -321,11 +324,14 @@ export const HealthView: React.FC<HealthViewProps> = ({
                   <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div className="text-sm font-semibold text-white">Security (Bandit)</div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Security (Bandit)</div>
+                    <div className="text-xs text-slate-400">Weight: 25%</div>
+                  </div>
                 </div>
-                {getAvailabilityBadge('ENABLED')}
+                {getAvailabilityBadge(health?.dimension_status?.security || 'ENABLED')}
               </div>
-              <div className="text-xl font-bold text-white">{health?.security_score ?? '—'} / 100</div>
+              <div className="text-xl font-bold text-white">{health?.security_score !== null && health?.security_score !== undefined ? `${Math.round(health.security_score)} / 100` : '—'}</div>
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
@@ -334,11 +340,14 @@ export const HealthView: React.FC<HealthViewProps> = ({
                   <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
                     <Package className="w-4 h-4" />
                   </div>
-                  <div className="text-sm font-semibold text-white">Dependency Health (pip-audit)</div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Dependency Health (pip-audit)</div>
+                    <div className="text-xs text-slate-400">Weight: 20%</div>
+                  </div>
                 </div>
-                {getAvailabilityBadge('ENABLED')}
+                {getAvailabilityBadge(health?.dimension_status?.dependencies || 'ENABLED')}
               </div>
-              <div className="text-xl font-bold text-white">{health?.dependency_score ?? '—'} / 100</div>
+              <div className="text-xl font-bold text-white">{health?.dependency_score !== null && health?.dependency_score !== undefined ? `${Math.round(health.dependency_score)} / 100` : '—'}</div>
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
@@ -347,11 +356,30 @@ export const HealthView: React.FC<HealthViewProps> = ({
                   <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
                     <Activity className="w-4 h-4" />
                   </div>
-                  <div className="text-sm font-semibold text-white">Test Health (Pytest Sandbox)</div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Test Health (Pytest Sandbox)</div>
+                    <div className="text-xs text-slate-400">Weight: 20%</div>
+                  </div>
                 </div>
-                {getAvailabilityBadge('ENABLED')}
+                {getAvailabilityBadge(health?.dimension_status?.test_health || (health?.test_health_score !== null && health?.test_health_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
               </div>
-              <div className="text-xl font-bold text-white">{health?.test_health_score ?? '—'} / 100</div>
+              <div className="text-xl font-bold text-white">{health?.test_health_score !== null && health?.test_health_score !== undefined ? `${Math.round(health.test_health_score)} / 100` : '—'}</div>
+            </div>
+
+            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Maintainability & Complexity</div>
+                    <div className="text-xs text-slate-400">Weight: 10%</div>
+                  </div>
+                </div>
+                {getAvailabilityBadge(health?.dimension_status?.maintainability || 'ENABLED')}
+              </div>
+              <div className="text-xl font-bold text-white">{health?.maintainability_score !== null && health?.maintainability_score !== undefined ? `${Math.round(health.maintainability_score)} / 100` : '—'}</div>
             </div>
           </div>
         )}
