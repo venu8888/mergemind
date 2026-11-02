@@ -34,8 +34,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
     setAssessmentSuccess(null);
     try {
       const result = await triggerHealthAssessment(repositoryId);
+      const qual = result.is_qualified ? 'QUALIFIED' : 'PROVISIONAL';
       setAssessmentSuccess(
-        `Assessment complete: ${Math.round(result.health_score)}/100 (${result.qualification_status || 'QUALIFIED'})`
+        `Assessment complete: ${Math.round(result.health_score)}/100 (${qual})`
       );
       await onRefresh();
     } catch (err: any) {
@@ -152,16 +153,21 @@ export const HealthView: React.FC<HealthViewProps> = ({
             </span>
             <span className="text-zinc-500 font-mono text-sm">/ 100</span>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2">
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                health?.qualification_status === 'QUALIFIED_SCORE' || health?.is_qualified
+                health?.is_qualified || health?.qualification_status === 'QUALIFIED_SCORE'
                   ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
                   : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
               }`}
             >
-              {health?.qualification_status || (health?.is_qualified ? 'QUALIFIED' : 'NOT ASSESSED')}
+              {health?.is_qualified ? 'QUALIFIED' : 'PROVISIONAL'}
             </span>
+            {health?.qualification_reason && (
+              <span className="text-[10px] font-mono text-zinc-500 truncate max-w-xs" title={health.qualification_reason}>
+                • {health.qualification_reason}
+              </span>
+            )}
           </div>
         </div>
 
@@ -177,7 +183,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
             </span>
           </div>
           <p className="mt-3 text-[11px] text-zinc-500 font-mono">
-            Evaluated checks count toward final score
+            {health?.assessment_completeness && health.assessment_completeness < 80
+              ? 'Below 80% threshold — provisional score'
+              : 'Evaluated checks count toward final score'}
           </p>
         </div>
 
@@ -205,7 +213,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium">Code Quality (Ruff)</span>
-              {getAvailabilityBadge('ENABLED')}
+              {getAvailabilityBadge(health?.dimension_status?.code_quality || (health?.code_quality_score !== null && health?.code_quality_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
             </div>
             <div className="text-2xl font-medium text-white tabular-nums">
               {health?.code_quality_score !== null && health?.code_quality_score !== undefined
@@ -221,7 +229,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium">Security (Bandit)</span>
-              {getAvailabilityBadge('ENABLED')}
+              {getAvailabilityBadge(health?.dimension_status?.security || (health?.security_score !== null && health?.security_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
             </div>
             <div className="text-2xl font-medium text-white tabular-nums">
               {health?.security_score !== null && health?.security_score !== undefined
@@ -237,7 +245,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium">Dependencies (pip-audit)</span>
-              {getAvailabilityBadge('ENABLED')}
+              {getAvailabilityBadge(health?.dimension_status?.dependencies || (health?.dependency_score !== null && health?.dependency_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
             </div>
             <div className="text-2xl font-medium text-white tabular-nums">
               {health?.dependency_score !== null && health?.dependency_score !== undefined
@@ -245,7 +253,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
                 : '— / 100'}
             </div>
             <div className="text-[11px] text-zinc-500 font-sans">
-              Weight: 20% • Known CVE vulnerabilities in locked graph
+              {health?.dependency_score !== null && health?.dependency_score !== undefined
+                ? 'Weight: 20% • Known CVE vulnerabilities in locked graph'
+                : 'Weight: 20% • No dependencies or requirements.txt configured'}
             </div>
           </div>
 
@@ -253,7 +263,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium">Maintainability (Radon)</span>
-              {getAvailabilityBadge('ENABLED')}
+              {getAvailabilityBadge(health?.dimension_status?.maintainability || (health?.maintainability_score !== null && health?.maintainability_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
             </div>
             <div className="text-2xl font-medium text-white tabular-nums">
               {health?.maintainability_score !== null && health?.maintainability_score !== undefined
@@ -261,7 +271,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
                 : '— / 100'}
             </div>
             <div className="text-[11px] text-zinc-500 font-sans">
-              Weight: 10% • McCabe cyclomatic complexity & docstrings
+              {health?.maintainability_score !== null && health?.maintainability_score !== undefined
+                ? 'Weight: 10% • McCabe cyclomatic complexity & docstrings'
+                : 'Weight: 10% • No Python functions or modules analyzed'}
             </div>
           </div>
 
@@ -269,7 +281,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
           <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium">Test Health (Pytest)</span>
-              {getAvailabilityBadge(health?.test_health_score !== null ? 'ENABLED' : 'UNCONFIGURED')}
+              {getAvailabilityBadge(health?.dimension_status?.test_health || (health?.test_health_score !== null && health?.test_health_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
             </div>
             <div className="text-2xl font-medium text-white tabular-nums">
               {health?.test_health_score !== null && health?.test_health_score !== undefined
@@ -277,7 +289,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
                 : '— / 100'}
             </div>
             <div className="text-[11px] text-zinc-500 font-sans">
-              Weight: 20% • Pass rate and coverage in Docker sandbox
+              {health?.test_health_score !== null && health?.test_health_score !== undefined
+                ? 'Weight: 20% • Pass rate and coverage in Docker sandbox'
+                : 'Weight: 20% • Pytest suite unconfigured in repository'}
             </div>
           </div>
         </div>
