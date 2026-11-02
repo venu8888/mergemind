@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CIFailureResponse(BaseModel):
@@ -41,6 +41,15 @@ class CIFailureIngestRequest(BaseModel):
     job_name: str = "Test Suite"
     commit_sha: str
     branch: str = "main"
-    raw_logs: str
+    raw_logs: str = ""
+    raw_log: str | None = None
     pull_request_id: str | None = None
     changed_files: list[str] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reconcile_raw_logs(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("raw_logs") and data.get("raw_log"):
+                data["raw_logs"] = data["raw_log"]
+        return data
