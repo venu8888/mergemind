@@ -90,7 +90,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-ink-950 text-zinc-100 flex flex-col font-sans selection:bg-zinc-700 selection:text-white">
       {/* Top Application Header */}
       <Header
         activeTab={activeTab}
@@ -102,16 +102,16 @@ export const App: React.FC = () => {
       />
 
       {/* Main View Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-6 py-6 space-y-6">
         {error && (
-          <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-sm flex items-center justify-between">
+          <div className="p-3.5 rounded-control bg-ink-950 border border-rose-800/60 text-rose-300 text-xs font-mono flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" strokeWidth={1.5} />
               <span>{error}</span>
             </div>
             <button
               onClick={() => initApp()}
-              className="text-xs text-rose-300 hover:text-white underline font-medium"
+              className="text-[11px] text-rose-300 hover:text-white underline font-medium"
             >
               Retry
             </button>
@@ -128,7 +128,6 @@ export const App: React.FC = () => {
               else if (tab === 'remediation') setActiveTab('remediation');
               else setActiveTab(tab);
             }}
-            onProposeForFailure={() => setActiveTab('remediation')}
           />
         )}
 
@@ -172,24 +171,24 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 mt-12 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-white/[0.08] bg-ink-950 py-5 mt-10 text-xs text-zinc-500 font-mono">
+        <div className="max-w-[1440px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-400">MergeMind v4.2.0</span>
+            <span className="font-semibold text-zinc-300">MergeMind v4.2.0</span>
             <span>•</span>
-            <span>Intelligent Repository Health & Automated Remediation Platform</span>
+            <span className="text-zinc-500 font-sans">Repository Health & Automated Remediation Platform</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 text-[11px]">
             <a
               href="http://localhost:8000/api/v1/docs"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-indigo-400 transition-colors"
+              className="hover:text-zinc-300 transition-colors"
             >
-              Interactive OpenAPI Docs
+              Interactive API
             </a>
             <span>•</span>
-            <span className="text-slate-600">PostgreSQL 18 + Docker Sandbox Isolation</span>
+            <span>PostgreSQL 16 + Docker Sandbox Engine</span>
           </div>
         </div>
       </footer>

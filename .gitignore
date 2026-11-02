@@ -39,6 +39,7 @@ frontend/dist-ssr/
 *.local
 .npm
 .eslintcache
+.unslop-reference/
 
 # IDE & OS
 .vscode/

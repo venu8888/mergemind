@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import {
-  AlertOctagon,
   Search,
   FileCode,
   RotateCw,
   Terminal,
-  Sparkles,
   PlusCircle,
   Copy,
   Check,
+  ShieldCheck,
+  Wrench,
 } from 'lucide-react';
 import type { CIFailure } from '../types';
 import { ingestCIFailure, generateRemediationProposal } from '../services/api';
@@ -107,44 +107,26 @@ export const CIFailureExplorer: React.FC<CIFailureExplorerProps> = ({
     switch (category) {
       case 'TEST_FAILURE':
         return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-rose-950/70 text-rose-300 border border-rose-800">
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950/60 text-rose-400 border border-rose-800/60">
             TEST FAILURE
           </span>
         );
       case 'LINT_ERROR':
         return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-950/70 text-amber-300 border border-amber-800">
-            LINT / STYLE ERROR
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/60 text-amber-400 border border-amber-800/60">
+            LINT ERROR
           </span>
         );
       case 'SECURITY_VIOLATION':
         return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-red-950/90 text-red-200 border border-red-700">
-            SECURITY VIOLATION
-          </span>
-        );
-      case 'DEPENDENCY_CONFLICT':
-        return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-purple-950/70 text-purple-300 border border-purple-800">
-            DEPENDENCY CONFLICT
-          </span>
-        );
-      case 'TIMEOUT':
-        return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-yellow-950/70 text-yellow-300 border border-yellow-800">
-            TIMEOUT
-          </span>
-        );
-      case 'INFRASTRUCTURE_FAILURE':
-        return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            INFRASTRUCTURE
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950/80 text-rose-300 border border-rose-700">
+            SECURITY
           </span>
         );
       default:
         return (
-          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
-            {category || 'UNANALYZED'}
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-ink-850 text-zinc-400 border border-white/[0.06]">
+            {category || 'BUILD ERROR'}
           </span>
         );
     }
@@ -152,93 +134,85 @@ export const CIFailureExplorer: React.FC<CIFailureExplorerProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-ink-900 border border-white/[0.08] px-5 py-3.5 rounded-panel">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
-            <AlertOctagon className="w-6 h-6" />
+          <div className="w-7 h-7 rounded-control bg-ink-800 border border-white/[0.08] flex items-center justify-center text-zinc-200">
+            <Terminal className="w-3.5 h-3.5" strokeWidth={1.5} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">CI/CD Failure Intelligence Explorer</h2>
-            <p className="text-sm text-slate-400">
-              Deterministic log classification, secret sanitization, stack localization, and root-cause hypothesis.
+            <h2 className="text-xs font-semibold text-white">CI/CD Failure Intelligence</h2>
+            <p className="text-[11px] text-zinc-500">
+              Deterministic log parsing, credential scrubbing, and stack-frame localization
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowIngestModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors shadow-lg shadow-indigo-900/20"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-ink-850 hover:bg-ink-800 text-zinc-200 text-xs font-mono border border-white/[0.08] transition-colors"
           >
-            <PlusCircle className="w-4 h-4" />
-            Ingest CI Log
+            <PlusCircle className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+            <span>Ingest Failure Log</span>
           </button>
+
           <button
             onClick={onRefresh}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700"
+            className="p-1.5 rounded-control bg-ink-850 hover:bg-ink-800 text-zinc-400 hover:text-white transition-colors border border-white/[0.08]"
             title="Refresh Failures"
           >
-            <RotateCw className="w-4 h-4" />
+            <RotateCw className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-wrap items-center gap-3 bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-ink-900 border border-white/[0.08] p-3 rounded-panel font-mono text-xs">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Search className="w-3.5 h-3.5 text-zinc-500 shrink-0 ml-1" strokeWidth={1.5} />
           <input
             type="text"
-            placeholder="Search by commit SHA, workflow, or summary..."
+            placeholder="Search commits, workflows, or error messages..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="bg-transparent text-zinc-200 placeholder:text-zinc-600 focus:outline-none w-full sm:w-80 text-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Category:</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg text-xs text-white py-1.5 px-2.5 focus:outline-none focus:border-indigo-500"
+            className="bg-ink-950 border border-white/[0.08] text-zinc-300 text-xs px-2.5 py-1 rounded-control focus:outline-none"
           >
             <option value="ALL">All Categories</option>
             <option value="TEST_FAILURE">Test Failure</option>
-            <option value="LINT_ERROR">Lint Error</option>
-            <option value="SECURITY_VIOLATION">Security Violation</option>
-            <option value="DEPENDENCY_CONFLICT">Dependency Conflict</option>
-            <option value="TIMEOUT">Timeout</option>
-            <option value="INFRASTRUCTURE_FAILURE">Infrastructure Failure</option>
+            <option value="LINT_ERROR">Lint / Style</option>
+            <option value="SECURITY_VIOLATION">Security</option>
           </select>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Status:</span>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg text-xs text-white py-1.5 px-2.5 focus:outline-none focus:border-indigo-500"
+            className="bg-ink-950 border border-white/[0.08] text-zinc-300 text-xs px-2.5 py-1 rounded-control focus:outline-none"
           >
             <option value="ALL">All Statuses</option>
-            <option value="UNANALYZED">Unanalyzed</option>
             <option value="ANALYZED">Analyzed</option>
-            <option value="REMEDIATING">Remediating</option>
-            <option value="RESOLVED">Resolved</option>
+            <option value="REMEDIATION_PROPOSED">Remediation Proposed</option>
           </select>
         </div>
       </div>
 
-      {/* Two-Column Explorer */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Two-Column Explorer Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Failure List */}
-        <div className="lg:col-span-5 space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-1">
+        <div className="lg:col-span-5 space-y-2.5">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 px-1">
             Recorded Failures ({filteredFailures.length})
           </div>
 
-          <div className="space-y-2.5 max-h-[750px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[720px] overflow-y-auto pr-1">
             {filteredFailures.length > 0 ? (
               filteredFailures.map((failure) => {
                 const isSelected = failure.id === selectedFailure?.id;
@@ -248,32 +222,32 @@ export const CIFailureExplorer: React.FC<CIFailureExplorerProps> = ({
                   <div
                     key={failure.id}
                     onClick={() => setSelectedFailureId(failure.id)}
-                    className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                    className={`p-3.5 rounded-panel cursor-pointer transition-colors border ${
                       isSelected
-                        ? 'bg-slate-800/90 border-indigo-500 shadow-md shadow-indigo-950/30'
-                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
+                        ? 'bg-ink-800 border-white/[0.15]'
+                        : 'bg-ink-900 border-white/[0.08] hover:border-zinc-700'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="text-sm font-semibold text-white truncate">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="text-xs font-semibold text-white truncate font-mono">
                         {failure.workflow_name || 'Workflow Run'}
                       </div>
                       {getCategoryBadge(cat)}
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 mb-3">
+                    <p className="text-xs text-zinc-400 font-sans line-clamp-2 mb-2 leading-relaxed">
                       {summary || 'No summary parsed'}
                     </p>
 
-                    <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-                      <span>SHA: {failure.commit_sha ? failure.commit_sha.substring(0, 7) : '—'}</span>
+                    <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+                      <span>Commit: {failure.commit_sha ? failure.commit_sha.substring(0, 7) : '—'}</span>
                       <span>{new Date(failure.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="p-8 text-center bg-slate-900/40 border border-slate-800 rounded-xl text-slate-500 text-sm">
+              <div className="p-8 text-center bg-ink-900 border border-white/[0.08] rounded-panel text-zinc-500 text-xs font-mono">
                 No CI failures match the current filter criteria.
               </div>
             )}
@@ -283,194 +257,173 @@ export const CIFailureExplorer: React.FC<CIFailureExplorerProps> = ({
         {/* Right Column: Deep-Dive Panel */}
         <div className="lg:col-span-7">
           {selectedFailure ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
+            <div className="bg-ink-900 border border-white/[0.08] rounded-panel p-5 space-y-5">
               {/* Detail Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-bold text-white">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-white/[0.08]">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white font-mono">
                       {selectedFailure.workflow_name || 'Workflow Run'}
                     </span>
                     {getCategoryBadge(selectedFailure.classification || selectedFailure.failure_category)}
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">
-                    ID: {selectedFailure.id} • Commit: {selectedFailure.commit_sha}
+                  <div className="text-xs text-zinc-500 font-mono">
+                    ID: {selectedFailure.id.substring(0, 8)} • Commit: {selectedFailure.commit_sha?.substring(0, 7)}
                   </div>
                 </div>
 
                 <button
                   onClick={() => handleCreateProposal(selectedFailure.id)}
                   disabled={isProposing}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-medium text-xs transition-colors shrink-0 shadow-lg shadow-indigo-900/20"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-ink-800 hover:bg-ink-700 disabled:bg-ink-800 text-zinc-100 text-xs font-mono font-medium border border-white/[0.08] transition-colors shrink-0"
                 >
                   {isProposing ? (
                     <>
-                      <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                      Synthesizing Fix with AI...
+                      <RotateCw className="w-3 h-3 animate-spin text-zinc-400" strokeWidth={1.5} />
+                      <span>Synthesizing...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Fix with AI
+                      <Wrench className="w-3 h-3 text-zinc-300" strokeWidth={1.5} />
+                      <span>Fix with AI</span>
                     </>
                   )}
                 </button>
               </div>
 
-              {/* Classification & Confidence */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-800/50 p-3.5 rounded-lg border border-slate-700/60">
-                  <div className="text-xs text-slate-400 mb-1">Classification Status</div>
-                  <div className="text-sm font-semibold text-white flex items-center gap-2">
-                    <span>{selectedFailure.classification || selectedFailure.failure_category || 'UNANALYZED'}</span>
-                    <span className="text-xs text-slate-400">
-                      ({Math.round((selectedFailure.confidence || 0.95) * 100)}% confidence)
-                    </span>
-                  </div>
+              {/* Error Summary Box */}
+              <div className="p-3.5 rounded-control bg-ink-950 border border-white/[0.06] space-y-1.5 font-mono text-xs">
+                <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
+                  Primary Error Signature
                 </div>
-
-                <div className="bg-slate-800/50 p-3.5 rounded-lg border border-slate-700/60">
-                  <div className="text-xs text-slate-400 mb-1">Failure Status</div>
-                  <div className="text-sm font-semibold text-white">
-                    {selectedFailure.status}
-                  </div>
+                <div className="text-rose-300 font-medium">
+                  {selectedFailure.error_summary || selectedFailure.error_message || 'Assertion failed'}
                 </div>
               </div>
 
-              {/* Advisory Root-Cause Hypothesis */}
-              {(selectedFailure.root_cause_hypothesis || selectedFailure.ai_advisory_hypothesis) && (
-                <div className="bg-indigo-950/30 border border-indigo-800/40 p-4 rounded-xl space-y-2">
-                  <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
-                    Advisory Root-Cause Hypothesis
-                  </div>
-                  <p className="text-sm text-slate-200">
-                    {selectedFailure.root_cause_hypothesis || selectedFailure.ai_advisory_hypothesis}
-                  </p>
-                  <p className="text-xs text-indigo-300/70 italic">
-                    Note: Hypotheses are informational and advisory. All corrective code must pass deterministic sandbox verification before pull request creation.
-                  </p>
+              {/* Localized Root Cause Files */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+                  Localized Root Cause Files ({selectedFailure.localized_files?.length || 0})
                 </div>
-              )}
 
-              {/* Localized Files and Stack Locations */}
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-slate-400" />
-                  Localized Stack Locations
-                </div>
-                {((selectedFailure.stack_locations && selectedFailure.stack_locations.length > 0) ||
-                  (selectedFailure.localized_files && selectedFailure.localized_files.length > 0)) ? (
+                {selectedFailure.localized_files && selectedFailure.localized_files.length > 0 ? (
                   <div className="space-y-1.5">
-                    {(selectedFailure.stack_locations || selectedFailure.localized_files || []).map((loc: any, idx: number) => (
+                    {selectedFailure.localized_files.map((loc: any, idx: number) => (
                       <div
                         key={idx}
-                        className="bg-slate-800/70 border border-slate-700/70 px-3 py-2 rounded text-xs font-mono text-slate-300 flex items-center justify-between"
+                        className="p-2.5 rounded-control bg-ink-950 border border-white/[0.06] flex items-center justify-between font-mono text-xs"
                       >
-                        <span className="text-indigo-300">
-                          {typeof loc === 'string' ? loc : `${loc.file || loc.file_path || loc.path}:${loc.line || loc.line_number || '?'}`}
+                        <div className="flex items-center gap-2">
+                          <FileCode className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+                          <span className="text-zinc-200">{loc.file_path}</span>
+                          {loc.line_number && <span className="text-zinc-500">:{loc.line_number}</span>}
+                        </div>
+                        <span className="text-[11px] text-zinc-500">
+                          {Math.round((loc.confidence || 0.85) * 100)}% conf
                         </span>
-                        {loc.function && <span className="text-slate-500">in {loc.function}()</span>}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 bg-slate-800/40 p-3 rounded border border-slate-800">
-                    No explicit source file locations localized from build log.
+                  <div className="p-3 bg-ink-950 rounded-control border border-white/[0.06] text-zinc-500 text-xs font-mono">
+                    No files localized from stack frames.
                   </div>
                 )}
               </div>
 
-              {/* Sanitized Log Viewer */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-slate-400" />
-                    Sanitized Log Output
+              {/* Raw Sanitized Log Console */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-mono text-zinc-500">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.5} />
+                    <span>Sanitized CI Log (Secrets Scrubbed)</span>
                   </div>
                   <button
-                    onClick={() => handleCopyLog(selectedFailure.sanitized_log || selectedFailure.raw_log || selectedFailure.log_excerpt || '')}
-                    className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                    onClick={() => handleCopyLog(selectedFailure.log_excerpt || '')}
+                    className="inline-flex items-center gap-1 hover:text-zinc-300 transition-colors"
                   >
-                    {copiedLog ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copiedLog ? 'Copied' : 'Copy Log'}
+                    {copiedLog ? (
+                      <Check className="w-3 h-3 text-emerald-400" strokeWidth={1.5} />
+                    ) : (
+                      <Copy className="w-3 h-3 text-zinc-500" strokeWidth={1.5} />
+                    )}
+                    <span>{copiedLog ? 'Copied' : 'Copy Log'}</span>
                   </button>
                 </div>
 
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-300 max-h-[300px] overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                  {selectedFailure.sanitized_log || selectedFailure.raw_log || selectedFailure.log_excerpt || 'No log data recorded.'}
+                <div className="p-3.5 rounded-control bg-ink-950 border border-white/[0.08] font-mono text-xs text-zinc-300 max-h-[300px] overflow-y-auto leading-relaxed select-text whitespace-pre-wrap">
+                  {selectedFailure.log_excerpt || 'No log excerpt available.'}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center p-12 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 text-sm">
-              Select a CI failure to inspect detailed analysis and logs.
+            <div className="h-full flex items-center justify-center p-12 bg-ink-900 border border-white/[0.08] rounded-panel text-zinc-500 text-xs font-mono">
+              Select a CI Failure record to view sanitized logs and root-cause localization.
             </div>
           )}
         </div>
       </div>
 
-      {/* Manual Ingestion Modal */}
+      {/* Ingestion Modal */}
       {showIngestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-indigo-400" />
-              Ingest CI Build Log
-            </h3>
-            <p className="text-xs text-slate-400">
-              Paste raw build failure logs. MergeMind will automatically sanitize credentials, match failure patterns, and localize impacted source code.
-            </p>
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-ink-900 border border-white/[0.1] rounded-panel max-w-xl w-full p-6 space-y-4 font-mono text-xs shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <span className="text-sm font-semibold text-white">Ingest CI Failure Log</span>
+              <button onClick={() => setShowIngestModal(false)} className="text-zinc-500 hover:text-zinc-200">
+                Cancel
+              </button>
+            </div>
 
-            <form onSubmit={handleIngest} className="space-y-4">
+            <form onSubmit={handleIngest} className="space-y-4 font-sans text-xs">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Workflow Name</label>
+                <label className="block text-zinc-400 font-mono text-[11px] mb-1">Workflow Name</label>
                 <input
                   type="text"
                   value={formWorkflowName}
                   onChange={(e) => setFormWorkflowName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-ink-950 border border-white/[0.08] rounded-control px-3 py-1.5 text-zinc-200 font-mono focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Commit SHA</label>
+                <label className="block text-zinc-400 font-mono text-[11px] mb-1">Target Commit SHA</label>
                 <input
                   type="text"
                   value={formCommitSha}
                   onChange={(e) => setFormCommitSha(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white font-mono focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-ink-950 border border-white/[0.08] rounded-control px-3 py-1.5 text-zinc-200 font-mono focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Raw CI Log</label>
+                <label className="block text-zinc-400 font-mono text-[11px] mb-1">Raw Log Excerpt</label>
                 <textarea
                   rows={6}
                   value={formRawLog}
                   onChange={(e) => setFormRawLog(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-ink-950 border border-white/[0.08] rounded-control p-3 text-zinc-300 font-mono text-xs leading-relaxed focus:outline-none"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowIngestModal(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+                  className="px-3 py-1.5 rounded-control bg-ink-800 text-zinc-400 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isIngesting}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white text-sm font-medium transition-colors"
+                  className="px-4 py-1.5 rounded-control bg-emerald-600 hover:bg-emerald-500 disabled:bg-ink-800 text-white font-mono font-medium transition-colors"
                 >
-                  {isIngesting ? <RotateCw className="w-4 h-4 animate-spin" /> : null}
-                  Ingest and Analyze
+                  {isIngesting ? 'Ingesting...' : 'Ingest & Classify'}
                 </button>
               </div>
             </form>

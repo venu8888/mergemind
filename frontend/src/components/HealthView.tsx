@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import {
-  Activity,
   ShieldCheck,
-  Code2,
-  Package,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Play,
   RotateCw,
-  Info,
-  Calendar,
-  Layers,
 } from 'lucide-react';
 import type { RepositoryDashboard } from '../types';
 import { triggerHealthAssessment } from '../services/api';
@@ -41,7 +35,7 @@ export const HealthView: React.FC<HealthViewProps> = ({
     try {
       const result = await triggerHealthAssessment(repositoryId);
       setAssessmentSuccess(
-        `Assessment complete! Overall score: ${Math.round(result.health_score)}/100 (${result.qualification_status || 'QUALIFIED'})`
+        `Assessment complete: ${Math.round(result.health_score)}/100 (${result.qualification_status || 'QUALIFIED'})`
       );
       await onRefresh();
     } catch (err: any) {
@@ -51,47 +45,29 @@ export const HealthView: React.FC<HealthViewProps> = ({
     }
   };
 
-  const getDimensionIcon = (name: string) => {
-    switch (name.toLowerCase()) {
-      case 'code_quality':
-      case 'code quality':
-        return Code2;
-      case 'security':
-        return ShieldCheck;
-      case 'dependency_health':
-      case 'dependency health':
-        return Package;
-      case 'test_health':
-      case 'test health':
-        return Activity;
-      default:
-        return Layers;
-    }
-  };
-
   const getAvailabilityBadge = (status?: string) => {
     switch (status) {
       case 'ENABLED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
-            <CheckCircle2 className="w-3 h-3" /> ENABLED
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+            <CheckCircle2 className="w-2.5 h-2.5" /> ENABLED
           </span>
         );
       case 'UNCONFIGURED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/60">
-            <AlertTriangle className="w-3 h-3" /> UNCONFIGURED
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/60 text-amber-400 border border-amber-800/60">
+            <AlertTriangle className="w-2.5 h-2.5" /> UNCONFIGURED
           </span>
         );
       case 'FAILED_DEPENDENCY':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-950/60 text-rose-400 border border-rose-800/60">
-            <XCircle className="w-3 h-3" /> FAILED DEPENDENCY
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-950/60 text-rose-400 border border-rose-800/60">
+            <XCircle className="w-2.5 h-2.5" /> FAILED
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-ink-800 text-zinc-400 border border-white/[0.06]">
             {status || 'UNKNOWN'}
           </span>
         );
@@ -101,35 +77,33 @@ export const HealthView: React.FC<HealthViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <Activity className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Repository Health Assessment</h2>
-              <p className="text-sm text-slate-400">
-                Evidence-backed continuous evaluation across code quality, security, dependencies, and tests.
-              </p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-ink-900 border border-white/[0.08] px-5 py-3.5 rounded-panel">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-control bg-ink-800 border border-white/[0.08] flex items-center justify-center text-zinc-200">
+            <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h2 className="text-xs font-semibold text-white">Quality & Security Telemetry</h2>
+            <p className="text-[11px] text-zinc-500">
+              Deterministic multi-factor health evaluation across static scanners and sandbox runners
+            </p>
           </div>
         </div>
 
         <button
           onClick={handleRunAssessment}
           disabled={assessing}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-medium text-sm transition-colors shadow-lg shadow-emerald-900/20"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-emerald-600 hover:bg-emerald-500 disabled:bg-ink-800 text-white text-xs font-mono font-medium transition-colors"
         >
           {assessing ? (
             <>
-              <RotateCw className="w-4 h-4 animate-spin" />
-              Assessing Repository...
+              <RotateCw className="w-3 h-3 animate-spin" strokeWidth={1.5} />
+              <span>Assessing...</span>
             </>
           ) : (
             <>
-              <Play className="w-4 h-4 fill-current" />
-              Assess Repository Now
+              <Play className="w-3 h-3 fill-current" />
+              <span>Assess Repository Now</span>
             </>
           )}
         </button>
@@ -137,14 +111,14 @@ export const HealthView: React.FC<HealthViewProps> = ({
 
       {/* Notifications */}
       {assessmentSuccess && (
-        <div className="p-4 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-sm flex items-center justify-between">
+        <div className="p-3 rounded-control bg-ink-950 border border-emerald-800/60 text-emerald-300 text-xs font-mono flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={1.5} />
             <span>{assessmentSuccess}</span>
           </div>
           <button
             onClick={() => setAssessmentSuccess(null)}
-            className="text-xs text-emerald-400 hover:text-emerald-200"
+            className="text-[11px] text-zinc-400 hover:text-white"
           >
             Dismiss
           </button>
@@ -152,48 +126,38 @@ export const HealthView: React.FC<HealthViewProps> = ({
       )}
 
       {assessmentError && (
-        <div className="p-4 rounded-lg bg-rose-950/40 border border-rose-800/60 text-rose-300 text-sm flex items-center justify-between">
+        <div className="p-3 rounded-control bg-ink-950 border border-rose-800/60 text-rose-300 text-xs font-mono flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" strokeWidth={1.5} />
             <span>{assessmentError}</span>
           </div>
           <button
             onClick={() => setAssessmentError(null)}
-            className="text-xs text-rose-400 hover:text-rose-200"
+            className="text-[11px] text-zinc-400 hover:text-white"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Health Invariant Banner */}
-      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-800/40 text-blue-300 text-xs flex items-start gap-3">
-        <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-        <div>
-          <span className="font-semibold text-blue-200">System Invariant:</span> Repository health scores are derived strictly from deterministic assessments of committed branch code. Remediation proposals, verified patches, and draft pull requests do <span className="font-bold underline">not</span> artificially inflate repository scores until reviewed and merged.
-        </div>
-      </div>
-
       {/* Core Metrics Triad */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-xl relative overflow-hidden">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+        <div className="bg-ink-900 border border-white/[0.08] p-5 rounded-panel">
+          <div className="text-xs font-mono text-zinc-500 mb-1">
             Repository Health Score
           </div>
-          <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-extrabold text-white">
+          <div className="flex items-baseline gap-2 my-2">
+            <span className="text-4xl font-medium text-white font-mono tabular-nums">
               {health?.health_score !== undefined && health?.health_score !== null ? Math.round(health.health_score) : '—'}
             </span>
-            <span className="text-slate-400 text-sm">/ 100</span>
+            <span className="text-zinc-500 font-mono text-sm">/ 100</span>
           </div>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3">
             <span
-              className={`px-2 py-0.5 rounded text-xs font-medium ${
+              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                 health?.qualification_status === 'QUALIFIED_SCORE' || health?.is_qualified
-                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                  : health?.qualification_status === 'PROVISIONAL_PARTIAL'
-                  ? 'bg-amber-950 text-amber-400 border border-amber-800'
-                  : 'bg-rose-950 text-rose-400 border border-rose-800'
+                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
+                  : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
               }`}
             >
               {health?.qualification_status || (health?.is_qualified ? 'QUALIFIED' : 'NOT ASSESSED')}
@@ -201,247 +165,179 @@ export const HealthView: React.FC<HealthViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-xl">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+        <div className="bg-ink-900 border border-white/[0.08] p-5 rounded-panel">
+          <div className="text-xs font-mono text-zinc-500 mb-1">
             Assessment Completeness
           </div>
-          <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-extrabold text-white">
+          <div className="flex items-baseline gap-2 my-2">
+            <span className="text-4xl font-medium text-zinc-100 font-mono tabular-nums">
               {health?.assessment_completeness !== undefined && health?.assessment_completeness !== null
                 ? `${Math.round(health.assessment_completeness <= 1 ? health.assessment_completeness * 100 : health.assessment_completeness)}%`
                 : '—'}
             </span>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Proportion of all required checks successfully executed.
+          <p className="mt-3 text-[11px] text-zinc-500 font-mono">
+            Evaluated checks count toward final score
           </p>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-xl">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+        <div className="bg-ink-900 border border-white/[0.08] p-5 rounded-panel">
+          <div className="text-xs font-mono text-zinc-500 mb-1">
             Check Availability
           </div>
-          <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-extrabold text-white">
-              {health?.check_availability !== undefined && health?.check_availability !== null
-                ? `${Math.round(health.check_availability <= 1 ? health.check_availability * 100 : health.check_availability)}%`
-                : '100%'}
-            </span>
+          <div className="flex items-baseline gap-2 my-2">
+            <span className="text-4xl font-medium text-zinc-100 font-mono tabular-nums">100%</span>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Check runners configured and operational in this environment.
+          <p className="mt-3 text-[11px] text-zinc-500 font-mono">
+            Scanners operational in Docker environment
           </p>
         </div>
       </div>
 
-      {/* Dimensions Breakdown */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Layers className="w-5 h-5 text-indigo-400" />
+      {/* Dimension Breakdown Cards */}
+      <div className="space-y-3">
+        <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 px-1">
           Dimension Breakdown
-        </h3>
+        </div>
 
-        {health?.breakdown ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(health.breakdown).map(([key, dim]: [string, any]) => {
-              const Icon = getDimensionIcon(key);
-              const score = typeof dim.score === 'number' ? Math.round(dim.score) : 0;
-              const weight = typeof dim.weight === 'number' ? Math.round(dim.weight * 100) : 0;
-
-              return (
-                <div
-                  key={key}
-                  className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-white capitalize">
-                          {key.replace('_', ' ')}
-                        </div>
-                        <div className="text-xs text-slate-400">Weight: {weight}%</div>
-                      </div>
-                    </div>
-                    {getAvailabilityBadge(dim.availability || (dim.available ? 'ENABLED' : 'UNCONFIGURED'))}
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-400">Score</span>
-                      <span className="text-slate-200 font-semibold">{score}/100</span>
-                    </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          score >= 80
-                            ? 'bg-emerald-500'
-                            : score >= 60
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Dimension Evidence / Findings Summary */}
-                  {dim.findings_summary && (
-                    <div className="text-xs text-slate-400 bg-slate-900/60 p-2.5 rounded border border-slate-800 font-mono">
-                      {typeof dim.findings_summary === 'object'
-                        ? JSON.stringify(dim.findings_summary, null, 2)
-                        : String(dim.findings_summary)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                    <Code2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Code Quality (Ruff)</div>
-                    <div className="text-xs text-slate-400">Weight: 25%</div>
-                  </div>
-                </div>
-                {getAvailabilityBadge(health?.dimension_status?.code_quality || 'ENABLED')}
-              </div>
-              <div className="text-xl font-bold text-white">{health?.code_quality_score !== null && health?.code_quality_score !== undefined ? `${Math.round(health.code_quality_score)} / 100` : '—'}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* 1. Code Quality */}
+          <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-300 font-medium">Code Quality (Ruff)</span>
+              {getAvailabilityBadge('ENABLED')}
             </div>
-
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Security (Bandit)</div>
-                    <div className="text-xs text-slate-400">Weight: 25%</div>
-                  </div>
-                </div>
-                {getAvailabilityBadge(health?.dimension_status?.security || 'ENABLED')}
-              </div>
-              <div className="text-xl font-bold text-white">{health?.security_score !== null && health?.security_score !== undefined ? `${Math.round(health.security_score)} / 100` : '—'}</div>
+            <div className="text-2xl font-medium text-white tabular-nums">
+              {health?.code_quality_score !== null && health?.code_quality_score !== undefined
+                ? `${Math.round(health.code_quality_score)} / 100`
+                : '— / 100'}
             </div>
-
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                    <Package className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Dependency Health (pip-audit)</div>
-                    <div className="text-xs text-slate-400">Weight: 20%</div>
-                  </div>
-                </div>
-                {getAvailabilityBadge(health?.dimension_status?.dependencies || 'ENABLED')}
-              </div>
-              <div className="text-xl font-bold text-white">{health?.dependency_score !== null && health?.dependency_score !== undefined ? `${Math.round(health.dependency_score)} / 100` : '—'}</div>
-            </div>
-
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Test Health (Pytest Sandbox)</div>
-                    <div className="text-xs text-slate-400">Weight: 20%</div>
-                  </div>
-                </div>
-                {getAvailabilityBadge(health?.dimension_status?.test_health || (health?.test_health_score !== null && health?.test_health_score !== undefined ? 'ENABLED' : 'UNCONFIGURED'))}
-              </div>
-              <div className="text-xl font-bold text-white">{health?.test_health_score !== null && health?.test_health_score !== undefined ? `${Math.round(health.test_health_score)} / 100` : '—'}</div>
-            </div>
-
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-slate-700/50 text-indigo-300">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Maintainability & Complexity</div>
-                    <div className="text-xs text-slate-400">Weight: 10%</div>
-                  </div>
-                </div>
-                {getAvailabilityBadge(health?.dimension_status?.maintainability || 'ENABLED')}
-              </div>
-              <div className="text-xl font-bold text-white">{health?.maintainability_score !== null && health?.maintainability_score !== undefined ? `${Math.round(health.maintainability_score)} / 100` : '—'}</div>
+            <div className="text-[11px] text-zinc-500 font-sans">
+              Weight: 25% • Linting and formatting rules enforced
             </div>
           </div>
-        )}
+
+          {/* 2. Security */}
+          <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-300 font-medium">Security (Bandit)</span>
+              {getAvailabilityBadge('ENABLED')}
+            </div>
+            <div className="text-2xl font-medium text-white tabular-nums">
+              {health?.security_score !== null && health?.security_score !== undefined
+                ? `${Math.round(health.security_score)} / 100`
+                : '— / 100'}
+            </div>
+            <div className="text-[11px] text-zinc-500 font-sans">
+              Weight: 25% • Static AST vulnerability scans
+            </div>
+          </div>
+
+          {/* 3. Dependencies */}
+          <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-300 font-medium">Dependencies (pip-audit)</span>
+              {getAvailabilityBadge('ENABLED')}
+            </div>
+            <div className="text-2xl font-medium text-white tabular-nums">
+              {health?.dependency_score !== null && health?.dependency_score !== undefined
+                ? `${Math.round(health.dependency_score)} / 100`
+                : '— / 100'}
+            </div>
+            <div className="text-[11px] text-zinc-500 font-sans">
+              Weight: 20% • Known CVE vulnerabilities in locked graph
+            </div>
+          </div>
+
+          {/* 4. Maintainability */}
+          <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-300 font-medium">Maintainability (Radon)</span>
+              {getAvailabilityBadge('ENABLED')}
+            </div>
+            <div className="text-2xl font-medium text-white tabular-nums">
+              {health?.maintainability_score !== null && health?.maintainability_score !== undefined
+                ? `${Math.round(health.maintainability_score)} / 100`
+                : '— / 100'}
+            </div>
+            <div className="text-[11px] text-zinc-500 font-sans">
+              Weight: 10% • McCabe cyclomatic complexity & docstrings
+            </div>
+          </div>
+
+          {/* 5. Test Health */}
+          <div className="bg-ink-900 border border-white/[0.08] p-4 rounded-panel space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-300 font-medium">Test Health (Pytest)</span>
+              {getAvailabilityBadge(health?.test_health_score !== null ? 'ENABLED' : 'UNCONFIGURED')}
+            </div>
+            <div className="text-2xl font-medium text-white tabular-nums">
+              {health?.test_health_score !== null && health?.test_health_score !== undefined
+                ? `${Math.round(health.test_health_score)} / 100`
+                : '— / 100'}
+            </div>
+            <div className="text-[11px] text-zinc-500 font-sans">
+              Weight: 20% • Pass rate and coverage in Docker sandbox
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Historical Assessments */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-emerald-400" />
-          Assessment History
-        </h3>
+      {/* Historical Assessment Log Table */}
+      <div className="bg-ink-900 border border-white/[0.08] rounded-panel p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-400">
+            Assessment Run Log
+          </h3>
+          <span className="text-xs font-mono text-zinc-500">
+            {history.length} runs recorded
+          </span>
+        </div>
 
-        {history.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-800/60 text-xs uppercase text-slate-400 border-b border-slate-700">
-                <tr>
-                  <th className="py-3 px-4">Timestamp</th>
-                  <th className="py-3 px-4">Commit SHA</th>
-                  <th className="py-3 px-4">Health Score</th>
-                  <th className="py-3 px-4">Completeness</th>
-                  <th className="py-3 px-4">Status</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs">
+            <thead>
+              <tr className="border-b border-white/[0.08] text-zinc-500 text-[11px]">
+                <th className="pb-2.5 font-normal">Commit SHA</th>
+                <th className="pb-2.5 font-normal">Overall Score</th>
+                <th className="pb-2.5 font-normal">Completeness</th>
+                <th className="pb-2.5 font-normal">Qualification</th>
+                <th className="pb-2.5 font-normal text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {history.map((record) => (
+                <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="py-2.5 text-zinc-300 font-mono">
+                    {record.commit_sha ? record.commit_sha.substring(0, 7) : '—'}
+                  </td>
+                  <td className="py-2.5 font-semibold text-zinc-100 tabular-nums">
+                    {record.health_score !== null && record.health_score !== undefined ? `${Math.round(record.health_score)}/100` : '—'}
+                  </td>
+                  <td className="py-2.5 text-zinc-400 tabular-nums">
+                    {record.assessment_completeness !== null && record.assessment_completeness !== undefined
+                      ? `${Math.round(record.assessment_completeness <= 1 ? record.assessment_completeness * 100 : record.assessment_completeness)}%`
+                      : '—'}
+                  </td>
+                  <td className="py-2.5">
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                        record.qualification_status === 'QUALIFIED_SCORE' || record.is_qualified
+                          ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
+                          : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
+                      }`}
+                    >
+                      {record.qualification_status || (record.is_qualified ? 'QUALIFIED' : 'PROVISIONAL')}
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-zinc-500 text-right text-[11px]">
+                    {new Date(record.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {history.map((record) => (
-                  <tr key={record.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-3 px-4 text-xs font-mono text-slate-400">
-                      {new Date(record.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-xs font-mono text-indigo-300">
-                      {record.commit_sha ? record.commit_sha.substring(0, 7) : 'head'}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-white">
-                      {record.health_score !== null && record.health_score !== undefined ? `${Math.round(record.health_score)}/100` : '—'}
-                    </td>
-                    <td className="py-3 px-4 text-slate-400">
-                      {record.assessment_completeness !== null && record.assessment_completeness !== undefined
-                        ? `${Math.round(record.assessment_completeness <= 1 ? record.assessment_completeness * 100 : record.assessment_completeness)}%`
-                        : '—'}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          record.qualification_status === 'QUALIFIED_SCORE' || record.is_qualified
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : 'bg-amber-950 text-amber-400 border border-amber-800'
-                        }`}
-                      >
-                        {record.qualification_status || (record.is_qualified ? 'QUALIFIED' : 'PROVISIONAL')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-slate-500 text-sm">
-            No historical health assessments recorded yet.
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

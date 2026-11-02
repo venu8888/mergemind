@@ -4,3 +4,4 @@ from app.services.intelligence.service import (
 )
 
 __all__ = ["RepositoryIntelligenceService", "PullRequestReviewService"]
+

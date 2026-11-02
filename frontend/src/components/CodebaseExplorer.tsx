@@ -52,8 +52,7 @@ export const CodebaseExplorer: React.FC<CodebaseExplorerProps> = ({ repositoryId
         ]);
         setBranches(branchList);
         setTree(treeData.tree || []);
-        
-        // Pick first blob if default not found
+
         const hasDefault = treeData.tree?.some((t) => t.path === selectedPath);
         if (!hasDefault && treeData.tree?.length) {
           const firstBlob = treeData.tree.find((t) => t.type === 'blob');
@@ -114,70 +113,67 @@ export const CodebaseExplorer: React.FC<CodebaseExplorerProps> = ({ repositoryId
   });
 
   const getFileIcon = (path: string) => {
-    if (path.endsWith('.py')) return <FileCode className="w-4 h-4 text-emerald-400 shrink-0" />;
-    if (path.endsWith('.md')) return <FileText className="w-4 h-4 text-sky-400 shrink-0" />;
-    if (path.endsWith('.json') || path.endsWith('.yml')) return <Code2 className="w-4 h-4 text-amber-400 shrink-0" />;
-    return <File className="w-4 h-4 text-slate-400 shrink-0" />;
+    if (path.endsWith('.py')) return <FileCode className="w-3.5 h-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />;
+    if (path.endsWith('.md')) return <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />;
+    return <File className="w-3.5 h-3.5 text-zinc-500 shrink-0" strokeWidth={1.5} />;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-5 rounded-xl">
+    <div className="space-y-5">
+      {/* Header Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-ink-900 border border-white/[0.08] px-5 py-3.5 rounded-panel">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <Code2 className="w-5 h-5" />
+          <div className="w-7 h-7 rounded-control bg-ink-800 border border-white/[0.08] flex items-center justify-center text-zinc-200">
+            <Code2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Codebase Explorer</h2>
-            <p className="text-xs text-slate-400">
-              Interactive GitHub repository filesystem with live Git Blob retrieval and syntax inspection.
-            </p>
+            <div className="text-xs font-semibold text-white">Codebase Explorer</div>
+            <div className="text-[11px] text-zinc-500">Live Git tree and blob inspection</div>
           </div>
         </div>
 
         {/* Branch Selector */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300">
-            <GitBranch className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="flex items-center gap-2 bg-ink-950 border border-white/[0.08] px-2.5 py-1 rounded-control text-xs font-mono text-zinc-300">
+            <GitBranch className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="bg-transparent text-slate-200 focus:outline-none cursor-pointer"
+              className="bg-transparent text-zinc-200 focus:outline-none cursor-pointer pr-1"
             >
               {branches.map((b) => (
-                <option key={b.name} value={b.name} className="bg-slate-900 text-slate-200">
+                <option key={b.name} value={b.name} className="bg-ink-900 text-zinc-200">
                   {b.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-[11px] text-zinc-500 font-mono">
             {tree.filter((t) => t.type === 'blob').length} files indexed
           </span>
         </div>
       </div>
 
       {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: File Tree */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-[700px]">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 px-2 flex items-center justify-between">
-            <span>Repository Tree</span>
-            {loadingTree && <RotateCw className="w-3 h-3 text-indigo-400 animate-spin" />}
+        <div className="lg:col-span-4 bg-ink-900 border border-white/[0.08] rounded-panel p-3.5 flex flex-col h-[680px]">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-2.5 px-2 flex items-center justify-between">
+            <span>Filesystem</span>
+            {loadingTree && <RotateCw className="w-3 h-3 text-zinc-400 animate-spin" strokeWidth={1.5} />}
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-1 font-mono text-xs pr-1">
+          <div className="flex-1 overflow-y-auto space-y-0.5 font-mono text-xs pr-1">
             {/* Root-level files */}
             {folders['/']?.map((item) => (
               <button
                 key={item.path}
                 onClick={() => setSelectedPath(item.path)}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition ${
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-control text-left transition-colors ${
                   selectedPath === item.path
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-ink-800 text-zinc-100 border border-white/[0.1]'
+                    : 'text-zinc-400 hover:bg-ink-850 hover:text-zinc-200'
                 }`}
               >
                 {getFileIcon(item.path)}
@@ -194,27 +190,27 @@ export const CodebaseExplorer: React.FC<CodebaseExplorerProps> = ({ repositoryId
                   <div key={folder} className="space-y-0.5">
                     <button
                       onClick={() => toggleFolder(folder)}
-                      className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left text-slate-300 hover:bg-slate-800 transition font-medium"
+                      className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-control text-left text-zinc-400 hover:text-zinc-200 hover:bg-ink-850 transition-colors font-medium"
                     >
                       {isExpanded ? (
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                        <ChevronDown className="w-3 h-3 text-zinc-500" strokeWidth={1.5} />
                       ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                        <ChevronRight className="w-3 h-3 text-zinc-500" strokeWidth={1.5} />
                       )}
-                      <Folder className="w-4 h-4 text-indigo-400 fill-indigo-400/20 shrink-0" />
+                      <Folder className="w-3.5 h-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />
                       <span className="truncate">{folder}</span>
                     </button>
 
                     {isExpanded && (
-                      <div className="ml-4 pl-2 border-l border-slate-800 space-y-0.5">
+                      <div className="ml-3.5 pl-2 border-l border-white/[0.06] space-y-0.5">
                         {folders[folder]?.map((item) => (
                           <button
                             key={item.path}
                             onClick={() => setSelectedPath(item.path)}
-                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition ${
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-control text-left transition-colors ${
                               selectedPath === item.path
-                                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-medium'
-                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                ? 'bg-ink-800 text-zinc-100 border border-white/[0.1] font-medium'
+                                : 'text-zinc-400 hover:bg-ink-850 hover:text-zinc-200'
                             }`}
                           >
                             {getFileIcon(item.path)}
@@ -230,46 +226,48 @@ export const CodebaseExplorer: React.FC<CodebaseExplorerProps> = ({ repositoryId
         </div>
 
         {/* Right Column: Code Viewer */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-[700px]">
+        <div className="lg:col-span-8 bg-ink-900 border border-white/[0.08] rounded-panel overflow-hidden flex flex-col h-[680px]">
           {/* File Tab Bar */}
-          <div className="bg-slate-950/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="bg-ink-950 border-b border-white/[0.08] px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 font-mono text-xs">
               {getFileIcon(selectedPath)}
-              <span className="font-mono text-xs font-semibold text-white">{selectedPath}</span>
+              <span className="font-semibold text-zinc-200">{selectedPath}</span>
               {fileMeta && (
-                <span className="text-[11px] text-slate-500 font-mono ml-2">
-                  {fileMeta.lines} lines • {Math.round(fileMeta.size)} B • {fileMeta.language}
+                <span className="text-[11px] text-zinc-500 ml-2">
+                  {fileMeta.lines} lines • {fileMeta.size} B
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono border border-slate-700 transition"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </button>
-            </div>
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-control bg-ink-850 hover:bg-ink-800 text-zinc-300 text-xs font-mono border border-white/[0.08] transition-colors"
+            >
+              {copied ? (
+                <Check className="w-3 h-3 text-emerald-400" strokeWidth={1.5} />
+              ) : (
+                <Copy className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+              )}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
           </div>
 
           {/* Source Code Content with Line Numbers */}
-          <div className="flex-1 overflow-auto bg-slate-950 p-4 font-mono text-xs leading-relaxed select-text">
+          <div className="flex-1 overflow-auto bg-ink-950 p-4 font-mono text-xs leading-relaxed select-text">
             {loadingFile ? (
-              <div className="h-full flex items-center justify-center text-slate-500 text-xs gap-2">
-                <RotateCw className="w-4 h-4 animate-spin text-indigo-400" />
-                <span>Fetching raw blob from GitHub...</span>
+              <div className="h-full flex items-center justify-center text-zinc-500 text-xs gap-2">
+                <RotateCw className="w-3.5 h-3.5 animate-spin text-zinc-400" strokeWidth={1.5} />
+                <span>Fetching blob from GitHub...</span>
               </div>
             ) : (
               <table className="w-full border-collapse">
                 <tbody>
                   {fileContent.split('\n').map((line, idx) => (
-                    <tr key={idx} className="hover:bg-slate-900/60 transition-colors">
-                      <td className="w-10 pr-4 text-right text-slate-600 select-none font-mono text-[11px] align-top">
+                    <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="w-10 pr-4 text-right text-zinc-600 select-none font-mono text-[11px] align-top">
                         {idx + 1}
                       </td>
-                      <td className="text-slate-200 whitespace-pre font-mono">{line || ' '}</td>
+                      <td className="text-zinc-200 whitespace-pre font-mono">{line || ' '}</td>
                     </tr>
                   ))}
                 </tbody>

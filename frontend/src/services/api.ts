@@ -14,17 +14,25 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const DEFAULT_API_KEY = import.meta.env.VITE_API_KEY || 'mergemind-dev-insecure-key';
 
 export function getApiKey(): string {
-  return localStorage.getItem('mergemind_api_key') || DEFAULT_API_KEY;
+  const stored = localStorage.getItem('mergemind_api_key');
+  if (stored && stored.trim() && stored !== 'null' && stored !== 'undefined') {
+    return stored.trim();
+  }
+  return DEFAULT_API_KEY;
 }
 
 export function setApiKey(key: string): void {
-  localStorage.setItem('mergemind_api_key', key);
+  if (key && key.trim()) {
+    localStorage.setItem('mergemind_api_key', key.trim());
+  } else {
+    localStorage.removeItem('mergemind_api_key');
+  }
 }
 
 async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers || {});
-  const key = getApiKey();
-  if (key && !headers.has('X-API-Key')) {
+  const key = getApiKey() || DEFAULT_API_KEY;
+  if (!headers.has('X-API-Key')) {
     headers.set('X-API-Key', key);
   }
   return fetch(input, { ...init, headers });
