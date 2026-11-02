@@ -1,0 +1,10 @@
+{
+  "include": [
+    "app",
+    "tests"
+  ],
+  "extraPaths": [
+    ".",
+    "C:/Users/lucky/anaconda3/Lib/site-packages"
+  ]
+}

@@ -4,6 +4,9 @@ import { DashboardOverview } from './components/DashboardOverview';
 import { HealthView } from './components/HealthView';
 import { CIFailureExplorer } from './components/CIFailureExplorer';
 import { RemediationCenter } from './components/RemediationCenter';
+import { CodebaseExplorer } from './components/CodebaseExplorer';
+import { RepositoryIntelligence } from './components/RepositoryIntelligence';
+import { PullRequestsView } from './components/PullRequestsView';
 import {
   fetchRepositories,
   fetchRepositoryDashboard,
@@ -19,7 +22,7 @@ import type {
 import { AlertCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>('');
   const [dashboard, setDashboard] = useState<RepositoryDashboard | null>(null);
@@ -115,16 +118,29 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Tab Views */}
-        {activeTab === 'dashboard' && (
+        {/* 7-Section Tab Views */}
+        {activeTab === 'overview' && (
           <DashboardOverview
             dashboard={dashboard}
-            onNavigateToTab={(tab: TabType) => setActiveTab(tab)}
+            onNavigateToTab={(tab: any) => {
+              if (tab === 'health') setActiveTab('quality-security');
+              else if (tab === 'ci-failures') setActiveTab('ci-intelligence');
+              else if (tab === 'remediation') setActiveTab('remediation');
+              else setActiveTab(tab);
+            }}
             onProposeForFailure={() => setActiveTab('remediation')}
           />
         )}
 
-        {activeTab === 'health' && (
+        {activeTab === 'explorer' && (
+          <CodebaseExplorer repositoryId={selectedRepoId} />
+        )}
+
+        {activeTab === 'intelligence' && (
+          <RepositoryIntelligence repositoryId={selectedRepoId} />
+        )}
+
+        {activeTab === 'quality-security' && (
           <HealthView
             repositoryId={selectedRepoId}
             dashboard={dashboard}
@@ -132,7 +148,11 @@ export const App: React.FC = () => {
           />
         )}
 
-        {activeTab === 'ci-failures' && (
+        {activeTab === 'pull-requests' && (
+          <PullRequestsView repositoryId={selectedRepoId} />
+        )}
+
+        {activeTab === 'ci-intelligence' && (
           <CIFailureExplorer
             repositoryId={selectedRepoId}
             failures={failures}

@@ -245,9 +245,17 @@ class GitHubClient:
                 owner_part, repo_part = repo_full_name, repo_full_name
             actual_path = f"/repos/{owner_part}/{repo_part}/commits/{actual_sha}"
         elif commit_sha is not None:
-            actual_path = f"/repos/{owner}/{repo}/commits/{commit_sha}"
+            if "/" in owner and repo is None:
+                owner_part, repo_part = owner.split("/", 1)
+                actual_path = f"/repos/{owner_part}/{repo_part}/commits/{commit_sha}"
+            else:
+                actual_path = f"/repos/{owner}/{repo}/commits/{commit_sha}"
         else:
-            actual_path = f"/repos/{owner}/{repo}/commits"
+            if "/" in owner and repo is None:
+                owner_part, repo_part = owner.split("/", 1)
+                actual_path = f"/repos/{owner_part}/{repo_part}/commits"
+            else:
+                actual_path = f"/repos/{owner}/{repo}/commits"
         response = await self._request(method="GET", path=actual_path)
         return response.json()
 
@@ -399,17 +407,13 @@ class GitHubClient:
         self, owner: str, repo: str | None = None, path: str | None = None, ref: str | None = None
     ) -> bytes:
         """Retrieves raw file content at an exact immutable ref/commit SHA."""
-        if "/" in owner and path is None:
+        if "/" in owner:
             owner_part, repo_part = owner.split("/", 1)
-            actual_path_arg = repo or ""
-            ref_param = ref
-        elif path is not None:
-            owner_part, repo_part = owner, repo or ""
-            actual_path_arg = path
+            actual_path_arg = path or repo or ""
             ref_param = ref
         else:
             owner_part, repo_part = owner, repo or ""
-            actual_path_arg = ""
+            actual_path_arg = path or ""
             ref_param = ref
 
         actual_url = f"/repos/{owner_part}/{repo_part}/contents/{actual_path_arg.lstrip('/')}"

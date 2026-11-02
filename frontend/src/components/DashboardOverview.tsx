@@ -77,7 +77,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               {isQualified ? 'Qualified' : 'Provisional'}
             </span>
             <span className="text-slate-400">
-              {Math.round(completeness * 100)}% complete
+              {Math.round(completeness <= 1 ? completeness * 100 : completeness)}% complete
             </span>
           </div>
         </div>

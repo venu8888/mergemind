@@ -306,12 +306,12 @@ export const CIFailureExplorer: React.FC<CIFailureExplorerProps> = ({
                   {isProposing ? (
                     <>
                       <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                      Generating Proposal...
+                      Synthesizing Fix with AI...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5" />
-                      Generate Remediation
+                      Fix with AI
                     </>
                   )}
                 </button>

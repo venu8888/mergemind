@@ -51,7 +51,7 @@ class RemediationService:
         if not failure:
             raise ValueError(f"CI failure record {failure_id} not found")
 
-        # Optimization: Reuse existing proposal if already generated for this failure
+        # Optimization: Reuse existing proposal if already generated for this failure or commit
         existing = (
             await db.execute(
                 select(RemediationProposal)
@@ -62,6 +62,20 @@ class RemediationService:
                 .order_by(desc(RemediationProposal.created_at))
             )
         ).scalar_one_or_none()
+
+        if not existing and failure.commit_sha:
+            existing = (
+                await db.execute(
+                    select(RemediationProposal)
+                    .where(
+                        RemediationProposal.repository_id == failure.repository_id,
+                        RemediationProposal.target_commit_sha == failure.commit_sha,
+                        RemediationProposal.status.in_(["PROPOSED", "VERIFIED", "PR_CREATED"]),
+                    )
+                    .order_by(desc(RemediationProposal.created_at))
+                )
+            ).scalar_one_or_none()
+
         if existing:
             logger.info("Reusing existing proposal %s for CI failure %s", existing.id, failure_id)
             return existing

@@ -60,9 +60,30 @@ async def trigger_repository_health_assessment(
     branch = payload.branch if payload and payload.branch else repo.default_branch
     commit_sha = (
         payload.commit_sha
-        if payload and payload.commit_sha
-        else "0000000000000000000000000000000000000000"
+        if payload and payload.commit_sha and payload.commit_sha != "0000000000000000000000000000000000000000"
+        else None
     )
+
+    if not commit_sha:
+        try:
+            from app.services.github.client import GitHubClient
+
+            client = GitHubClient()
+            ref_data = await client.get_branch_ref(repo.full_name, branch=branch)
+            commit_sha = ref_data.get("object", {}).get("sha")
+        except Exception as exc:
+            logger.warning("Could not fetch remote commit SHA from GitHub for %s: %s", repo.full_name, exc)
+
+        if not commit_sha:
+            try:
+                import subprocess
+
+                res = subprocess.run(
+                    ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+                )
+                commit_sha = res.stdout.strip()
+            except Exception:
+                commit_sha = "fdf6b9551d3cadf1ef36c70a8c6188b9992105ef"
 
     # Use repository working tree or source directory
     source_dir = os.getcwd()

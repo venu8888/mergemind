@@ -417,7 +417,9 @@ export const HealthView: React.FC<HealthViewProps> = ({
                       {record.health_score !== null && record.health_score !== undefined ? `${Math.round(record.health_score)}/100` : '—'}
                     </td>
                     <td className="py-3 px-4 text-slate-400">
-                      {record.assessment_completeness !== null && record.assessment_completeness !== undefined ? `${Math.round(record.assessment_completeness * 100)}%` : '—'}
+                      {record.assessment_completeness !== null && record.assessment_completeness !== undefined
+                        ? `${Math.round(record.assessment_completeness <= 1 ? record.assessment_completeness * 100 : record.assessment_completeness)}%`
+                        : '—'}
                     </td>
                     <td className="py-3 px-4">
                       <span

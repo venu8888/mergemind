@@ -64,6 +64,15 @@ class CIFailureService:
             )
 
         existing = (await db.execute(dedup_query)).scalar_one_or_none()
+        if not existing and commit_sha:
+            # Secondary deduplication: check if exact job on exact commit was already ingested
+            commit_dedup = select(CIFailureRecord).where(
+                CIFailureRecord.repository_id == repository_id,
+                CIFailureRecord.commit_sha == commit_sha,
+                CIFailureRecord.job_name == job_name,
+            )
+            existing = (await db.execute(commit_dedup)).scalar_one_or_none()
+
         if existing:
             logger.info(
                 "CI failure already ingested for repo %s (Run %d, Job %s); returning existing record %s",

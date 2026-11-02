@@ -48,3 +48,4 @@ htmlcov/
 # Node & Frontend build artifacts
 node_modules/
 frontend/dist/
+

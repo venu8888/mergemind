@@ -1,8 +1,24 @@
 import React from 'react';
-import { ShieldCheck, Activity, Terminal, Wrench, RefreshCw } from 'lucide-react';
+import {
+  ShieldCheck,
+  Activity,
+  Terminal,
+  Wrench,
+  RefreshCw,
+  FolderGit2,
+  Cpu,
+  GitPullRequest,
+} from 'lucide-react';
 import type { Repository } from '../types';
 
-export type TabType = 'dashboard' | 'health' | 'ci-failures' | 'remediation';
+export type TabType =
+  | 'overview'
+  | 'explorer'
+  | 'intelligence'
+  | 'quality-security'
+  | 'pull-requests'
+  | 'ci-intelligence'
+  | 'remediation';
 
 interface HeaderProps {
   repositories: Repository[];
@@ -36,11 +52,11 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-lg text-white tracking-tight">MergeMind</span>
                 <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-indigo-950 text-indigo-400 border border-indigo-800/60">
-                  Phase 4 Release
+                  Platform v4.2
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
-                Repository Health, Verification & Remediation Platform
+                AI-Powered GitHub Repository Management & Intelligence Platform
               </p>
             </div>
           </div>
@@ -77,54 +93,90 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex space-x-1 -mb-px">
+        {/* 7-Section Navigation Tabs */}
+        <nav className="flex space-x-1 -mb-px overflow-x-auto no-scrollbar">
           <button
-            onClick={() => onSelectTab('dashboard')}
-            className={`flex items-center space-x-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition ${
-              activeTab === 'dashboard'
+            onClick={() => onSelectTab('overview')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'overview'
                 ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <Activity className="w-4 h-4" />
+            <Activity className="w-3.5 h-3.5" />
             <span>Overview</span>
           </button>
 
           <button
-            onClick={() => onSelectTab('health')}
-            className={`flex items-center space-x-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition ${
-              activeTab === 'health'
+            onClick={() => onSelectTab('explorer')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'explorer'
                 ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Repository Health</span>
+            <FolderGit2 className="w-3.5 h-3.5" />
+            <span>Codebase Explorer</span>
           </button>
 
           <button
-            onClick={() => onSelectTab('ci-failures')}
-            className={`flex items-center space-x-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition ${
-              activeTab === 'ci-failures'
+            onClick={() => onSelectTab('intelligence')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'intelligence'
                 ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <Terminal className="w-4 h-4" />
-            <span>CI Failure Intelligence</span>
+            <Cpu className="w-3.5 h-3.5" />
+            <span>Repository Intelligence</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('quality-security')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'quality-security'
+                ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Quality & Security</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('pull-requests')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'pull-requests'
+                ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <GitPullRequest className="w-3.5 h-3.5" />
+            <span>Pull Requests</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('ci-intelligence')}
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
+              activeTab === 'ci-intelligence'
+                ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            <span>CI/CD Intelligence</span>
           </button>
 
           <button
             onClick={() => onSelectTab('remediation')}
-            className={`flex items-center space-x-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition ${
+            className={`flex items-center space-x-2 px-3 py-2.5 text-xs font-semibold border-b-2 transition shrink-0 ${
               activeTab === 'remediation'
                 ? 'border-indigo-500 text-indigo-400 bg-slate-850/40'
                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
             }`}
           >
-            <Wrench className="w-4 h-4" />
-            <span>Remediation Center</span>
+            <Wrench className="w-3.5 h-3.5" />
+            <span>AI Remediation</span>
           </button>
         </nav>
       </div>

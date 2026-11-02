@@ -90,6 +90,26 @@ export const RemediationCenter: React.FC<RemediationCenterProps> = ({
     setTimeout(() => setCopiedDiff(false), 2000);
   };
 
+  const getProviderInfo = (provider?: string | null, model?: string | null) => {
+    const isGemini =
+      provider === 'llm' ||
+      provider === 'gemini-llm' ||
+      provider?.includes('gemini') ||
+      model?.includes('gemini');
+    if (isGemini) {
+      return {
+        label: 'Gemini 2.5 Flash (AI Remediation)',
+        badgeClass: 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60',
+        isAi: true,
+      };
+    }
+    return {
+      label: 'Deterministic AST Engine',
+      badgeClass: 'bg-slate-800 text-slate-300 border-slate-700',
+      isAi: false,
+    };
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'VERIFIED':
@@ -287,6 +307,15 @@ export const RemediationCenter: React.FC<RemediationCenterProps> = ({
                       {explanation || 'No explanation provided.'}
                     </p>
 
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${getProviderInfo(proposal.provider_name, proposal.model_identifier).badgeClass}`}>
+                        {getProviderInfo(proposal.provider_name, proposal.model_identifier).isAi && (
+                          <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                        )}
+                        {getProviderInfo(proposal.provider_name, proposal.model_identifier).label}
+                      </span>
+                    </div>
+
                     <div className="flex items-center justify-between text-xs">
                       {getRiskBadge(proposal.risk_level)}
                       <span className="text-slate-500 font-mono">
@@ -318,8 +347,15 @@ export const RemediationCenter: React.FC<RemediationCenterProps> = ({
                     {getStatusBadge(selectedProposal.status)}
                     {getRiskBadge(selectedProposal.risk_level)}
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">
-                    Target Failure ID: {selectedProposal.ci_failure_id || '—'} • Strategy: {selectedProposal.remediation_strategy || selectedProposal.provider_name || 'DETERMINISTIC'}
+                  <div className="text-xs text-slate-400 font-mono flex items-center gap-2 mt-1 flex-wrap">
+                    <span>Target Failure: {selectedProposal.ci_failure_id ? selectedProposal.ci_failure_id.substring(0, 8) : '—'}</span>
+                    <span>•</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${getProviderInfo(selectedProposal.provider_name, selectedProposal.model_identifier).badgeClass}`}>
+                      {getProviderInfo(selectedProposal.provider_name, selectedProposal.model_identifier).isAi && (
+                        <Sparkles className="w-3 h-3 text-indigo-400" />
+                      )}
+                      {getProviderInfo(selectedProposal.provider_name, selectedProposal.model_identifier).label}
+                    </span>
                   </div>
                 </div>
 

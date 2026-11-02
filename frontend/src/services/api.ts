@@ -169,3 +169,154 @@ export async function postMergeReassess(
   const res = await authFetch(url, { method: 'POST' });
   return handleResponse<RepositoryHealth>(res);
 }
+
+// ==============================================================================
+// Codebase Explorer, Intelligence & Live GitHub Pull Request APIs
+// ==============================================================================
+
+export async function fetchRepositoryTree(
+  repoId: string,
+  branch: string = 'main'
+): Promise<{ repository: string; branch: string; tree: Array<{ path: string; type: string; size?: number; sha: string }> }> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/tree?branch=${encodeURIComponent(branch)}`);
+  return handleResponse(res);
+}
+
+export async function fetchRepositoryBlob(
+  repoId: string,
+  path: string,
+  ref: string = 'main'
+): Promise<{ path: string; content: string; size: number; lines: number; language: string }> {
+  const res = await authFetch(
+    `${API_BASE_URL}/api/v1/repositories/${repoId}/blob?path=${encodeURIComponent(path)}&ref=${encodeURIComponent(ref)}`
+  );
+  return handleResponse(res);
+}
+
+export async function fetchRepositoryBranches(
+  repoId: string
+): Promise<Array<{ name: string; commit_sha: string; protected: boolean }>> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/branches`);
+  return handleResponse(res);
+}
+
+export async function fetchRepositoryCommits(
+  repoId: string,
+  limit: number = 15
+): Promise<Array<{ sha: string; short_sha: string; message: string; author: string; date: string; html_url?: string }>> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/commits?limit=${limit}`);
+  return handleResponse(res);
+}
+
+export async function fetchRepositoryIntelligence(
+  repoId: string,
+  branch: string = 'main'
+): Promise<{
+  repository: string;
+  branch: string;
+  total_files: number;
+  python_files_count: number;
+  test_files_count: number;
+  doc_files_count: number;
+  total_loc: number;
+  technologies: string[];
+  avg_complexity: number;
+  complex_functions_count: number;
+  function_complexities: Array<{ file: string; function: string; line: number; complexity: number; grade: string }>;
+  modules: Array<{ path: string; loc: number; imports: string[] }>;
+  ai_insights: {
+    architecture_pattern: string;
+    modularity_score: number;
+    strengths: string[];
+    risks: string[];
+    recommendations: string[];
+    confidence: number;
+  };
+}> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/intelligence?branch=${encodeURIComponent(branch)}`);
+  return handleResponse(res);
+}
+
+export async function fetchGitHubPullRequests(
+  repoId: string,
+  state: string = 'all'
+): Promise<Array<{
+  number: number;
+  title: string;
+  state: string;
+  draft: boolean;
+  author: string;
+  author_avatar?: string;
+  created_at: string;
+  head_branch: string;
+  head_sha: string;
+  base_branch: string;
+  html_url: string;
+  body: string;
+}>> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/github-pulls?state=${encodeURIComponent(state)}`);
+  return handleResponse(res);
+}
+
+export async function fetchGitHubPullRequestDetail(
+  repoId: string,
+  pullNumber: number
+): Promise<{
+  number: number;
+  title: string;
+  state: string;
+  draft: boolean;
+  author: string;
+  author_avatar?: string;
+  created_at: string;
+  head_branch: string;
+  head_sha: string;
+  base_branch: string;
+  html_url: string;
+  body: string;
+  changed_files: Array<{ filename: string; status: string; additions: number; deletions: number; changes: number; patch?: string }>;
+  diff: string;
+  additions: number;
+  deletions: number;
+}> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/github-pulls/${pullNumber}`);
+  return handleResponse(res);
+}
+
+export async function reviewPullRequestWithAI(
+  repoId: string,
+  pullNumber: number
+): Promise<{
+  summary: string;
+  quality_gate: string;
+  risk_level: string;
+  verdict: string;
+  findings: Array<{ category: string; file: string; line: number; message: string; recommendation: string }>;
+  positive_observations: string[];
+  provider: string;
+  reviewed_at?: string;
+}> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/github-pulls/${pullNumber}/review`, {
+    method: 'POST',
+  });
+  return handleResponse(res);
+}
+
+export async function verifyPullRequestInSandbox(
+  repoId: string,
+  pullNumber: number
+): Promise<{
+  pr_number: number;
+  verification_status: string;
+  tests_passed: number;
+  tests_failed: number;
+  pass_rate_pct: number;
+  quality_gate: string;
+  duration_ms: number;
+  summary: string;
+}> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/repositories/${repoId}/github-pulls/${pullNumber}/verify`, {
+    method: 'POST',
+  });
+  return handleResponse(res);
+}
