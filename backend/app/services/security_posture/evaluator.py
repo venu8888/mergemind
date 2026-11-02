@@ -656,3 +656,4 @@ class RepositorySecurityPostureEvaluator:
                 remediation="Check 'Require contributors to sign off on web-based commits' in Settings.",
             ),
         ]
+
