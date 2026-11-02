@@ -100,6 +100,17 @@ class GitHubClient:
         follow_redirects: bool = False,
     ) -> httpx.Response:
         """Executes HTTP request with rate-limit tracking and bounded jittered retries."""
+        if not self.token:
+            try:
+                from app.services.github.auth import get_shared_token_manager
+
+                tm = get_shared_token_manager()
+                def_tok = await tm.get_default_token()
+                if def_tok:
+                    self.token = def_tok
+            except Exception:
+                pass
+
         url = f"{self.base_url}/{path.lstrip('/')}"
         headers = self._build_headers(accept=accept)
 

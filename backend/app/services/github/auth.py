@@ -156,6 +156,31 @@ class InstallationTokenManager:
             )
             return tok
 
+    async def get_default_token(self) -> str | None:
+        """Fetch an active installation token for authenticated default GitHub API calls."""
+        for inst_id in list(self._tokens.keys()):
+            if self.is_token_valid(inst_id):
+                cached = self._tokens[inst_id]
+                return cached[0] if isinstance(cached, tuple) else cached.token
+
+        try:
+            from app.core.database import AsyncSessionLocal
+            from app.models.installation import Installation
+            from sqlalchemy import select
+
+            async with AsyncSessionLocal() as db:
+                res = await db.execute(
+                    select(Installation.github_installation_id)
+                    .where(Installation.state == "ACTIVE")
+                    .limit(1)
+                )
+                row = res.first()
+                if row and row[0]:
+                    return await self.get_installation_token(row[0])
+        except Exception:
+            pass
+        return None
+
     async def _exchange_token(
         self,
         installation_id: int,
