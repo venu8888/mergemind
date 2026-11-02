@@ -250,6 +250,61 @@ async def get_repository_intelligence(
         ) from exc
 
 
+@router.get(
+    "/{repo_id}/security-posture",
+    summary="Comprehensive 43-Check Repository Governance & Security Posture",
+    dependencies=[Depends(verify_api_key)],
+)
+async def get_repository_security_posture(
+    repo_id: str,
+    branch: str = Query(default="main"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Evaluate 43 enterprise security, branch protection, access control, and settings checks."""
+    repo = (
+        await db.execute(select(Repository).where(Repository.id == repo_id))
+    ).scalar_one_or_none()
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Repository {repo_id} not found"
+        )
+
+    from app.services.security_posture import RepositorySecurityPostureEvaluator
+    from app.services.github.auth import get_shared_token_manager
+    from app.services.github.client import GitHubClient
+    from app.models.installation import Installation
+
+    client = None
+    try:
+        inst = None
+        if repo.installation_id:
+            inst = (
+                await db.execute(select(Installation).where(Installation.id == repo.installation_id))
+            ).scalar_one_or_none()
+        if not inst:
+            inst = (
+                await db.execute(select(Installation).where(Installation.state == "ACTIVE"))
+            ).scalar_one_or_none()
+
+        if inst and inst.github_installation_id:
+            tm = get_shared_token_manager()
+            token = await tm.get_installation_token(inst.github_installation_id)
+            client = GitHubClient(token=token)
+    except Exception as exc:
+        logger.warning("Could not instantiate authenticated GitHubClient for posture check: %s", exc)
+
+    evaluator = RepositorySecurityPostureEvaluator(client=client)
+    try:
+        return await evaluator.evaluate_repository(
+            repo.full_name, branch=branch or repo.default_branch or "main"
+        )
+    except Exception as exc:
+        logger.error("Failed to evaluate security posture for %s: %s", repo.full_name, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
+
+
 # ==============================================================================
 # Live GitHub Pull Request & Intelligent Review Endpoints
 # ==============================================================================

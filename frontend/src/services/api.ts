@@ -328,3 +328,50 @@ export async function verifyPullRequestInSandbox(
   });
   return handleResponse(res);
 }
+
+
+export interface SecurityPostureCheck {
+  id: string;
+  name: string;
+  category: string;
+  status: 'PASSED' | 'FAILED' | 'WARNING' | 'NOT_CONFIGURED';
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  description: string;
+  evidence: string;
+  remediation: string;
+}
+
+export interface SecurityPostureCategory {
+  category: string;
+  title: string;
+  total_checks: number;
+  passed_checks: number;
+  score: number;
+  checks: SecurityPostureCheck[];
+}
+
+export interface SecurityPostureReport {
+  repository_full_name: string;
+  overall_posture_score: number;
+  total_checks: number;
+  passed_checks: number;
+  failed_checks: number;
+  warning_checks: number;
+  categories: {
+    branch_protection: SecurityPostureCategory;
+    security_features: SecurityPostureCategory;
+    access_control: SecurityPostureCategory;
+    repository_settings: SecurityPostureCategory;
+  };
+  summary_findings: string[];
+}
+
+export async function fetchSecurityPosture(
+  repoId: string,
+  branch: string = 'main'
+): Promise<SecurityPostureReport> {
+  const res = await authFetch(
+    `${API_BASE_URL}/api/v1/repositories/${repoId}/security-posture?branch=${encodeURIComponent(branch)}`
+  );
+  return handleResponse<SecurityPostureReport>(res);
+}
