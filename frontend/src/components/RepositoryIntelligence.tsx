@@ -79,7 +79,7 @@ export const RepositoryIntelligence: React.FC<RepositoryIntelligenceProps> = ({ 
           <div>
             <h2 className="text-xs font-semibold text-white">Full-Codebase Repository Intelligence</h2>
             <p className="text-[11px] text-zinc-500">
-              AST modularity analysis, cyclomatic complexity profiling, and Gemini 2.5 Flash architectural reasoning
+              AST modularity analysis, cyclomatic complexity profiling, and Gemini 3.6 Flash architectural reasoning
             </p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export const RepositoryIntelligence: React.FC<RepositoryIntelligenceProps> = ({ 
             <div className="flex items-center gap-2">
               <Activity className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
               <span className="text-xs font-mono uppercase tracking-wider text-zinc-300">
-                Architectural Advisory (Gemini 2.5 Flash)
+                Architectural Advisory ({data?.ai_architectural_review?.model || 'Gemini 3.6 Flash'})
               </span>
             </div>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded text-zinc-400 border border-white/[0.08]">

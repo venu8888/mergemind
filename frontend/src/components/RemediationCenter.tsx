@@ -95,8 +95,11 @@ export const RemediationCenter: React.FC<RemediationCenterProps> = ({
       provider?.includes('gemini') ||
       model?.includes('gemini');
     if (isGemini) {
+      const displayModel = model
+        ? (model.startsWith('gemini-') ? `Gemini ${model.replace('gemini-', '')}` : model)
+        : 'Gemini 3.6 Flash';
       return {
-        label: 'Gemini 2.5 Flash',
+        label: displayModel,
         badgeClass: 'bg-ink-800 text-zinc-200 border-white/[0.1]',
       };
     }
