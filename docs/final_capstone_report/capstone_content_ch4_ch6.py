@@ -352,3 +352,4 @@ HEALTH_VARIANCE_TABLE_ROWS = [
     ("mergemind-test-sandbox", "100 / 100", "100 / 100", "100 / 100", "60 / 100", "Unconfigured", "95 / 100", "QUALIFIED (80%)"),
     ("AI-Proctoring (ML System)", "100 / 100", "100 / 100", "Unconfigured", "Unconfigured", "Unconfigured", "100 / 100", "PROVISIONAL (50%)")
 ]
+

@@ -464,3 +464,4 @@ COMPARE_TABLE_ROWS = [
     ("Sandbox Verification", "None", "None", "Isolated Docker container re-test"),
     ("Draft PR Creation", "None", "Manual developer creation", "Autonomous GitHub Draft PR authoring")
 ]
+

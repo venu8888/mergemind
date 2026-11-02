@@ -587,3 +587,4 @@ if __name__ == "__main__":
     gen_diag_9()
     gen_diag_10()
     print("All 10 diagrams successfully generated!")
+

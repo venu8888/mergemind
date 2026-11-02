@@ -1,0 +1,21 @@
+\chapter*{ABSTRACT}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Modern software engineering organizations are increasingly constrained by operational friction stemming from fragmented developer toolchains, hidden architectural quality decay, software supply chain vulnerabilities, cognitive exhaustion during code reviews, and protracted debugging cycles when continuous integration (CI/CD) pipelines fail. Conventional static application security testing (SAST) and continuous integration runners generate voluminous diagnostic console logs, yet delegate the laborious task of stack frame localization, context reconstruction, and patch authoring entirely to human developers.
+
+\vspace{0.4cm}
+To bridge this critical operational gap, this capstone dissertation presents \textbf{MergeMind}: an AI-powered GitHub repository intelligence, security governance, and automated code remediation platform. MergeMind is architected as an enterprise-grade modular monolith comprising an asynchronous FastAPI backend, a responsive React 18 single-page application (SPA), an enterprise PostgreSQL 18 relational store, and an isolated Docker execution sandbox. The platform connects securely to GitHub via an authoritative GitHub App architecture utilizing asymmetric RSA cryptographic key pairs and short-lived RS256 JSON Web Tokens (JWT) to secure an authoritative 5,000 requests/hour API quota and ingest real-time repository events via HMAC-SHA256 verified webhooks.
+
+\vspace{0.4cm}
+MergeMind introduces three core technical contributions:
+\begin{enumerate}
+    \item \textbf{Multi-Factor Deterministic Health Telemetry:} Ingests remote repository snapshots via streamed tarball decompression, executing parallel static analysis harnesses across five calibrated dimensions (Astral Ruff code quality: 25\%, Bandit AST security scanning: 25\%, pip-audit dependency CVE auditing: 20\%, Radon cyclomatic complexity: 10\%, and Pytest pass rate: 20\%) with dynamic mathematical weight re-normalization and an authoritative qualification gating threshold ($\ge 80\%$ completeness).
+    \item \textbf{Enterprise Security Posture Governance Suite:} Evaluates 43 deterministic policy checks spanning Branch Protection (12 checks), Security Features (9 checks), Access Control (8 checks), and Repository Settings (14 checks) to compute an objective Security Posture Index (SPI).
+    \item \textbf{Autonomous AI Remediation Pipeline:} Ingests and sanitizes raw CI/CD failure logs via regex token redaction, localizes offending stack frames, prompts Google Gemini 3.6 Flash to synthesize precise unified diff patches, syntactically validates patches against Python Abstract Syntax Tree (AST) grammar, re-executes tests within an isolated Docker container sandbox, and automatically authors verified GitHub Draft Pull Requests upon test passage.
+\end{enumerate}
+
+\vspace{0.4cm}
+Empirical evaluation conducted across real-world production repositories (including YOLO26n, mergemind-test-sandbox, and AI-Proctoring) and a comprehensive 185-test automated verification suite confirms that MergeMind discriminates nuanced code health scores (76/100, 95/100, and 100/100 respectively), completely prevents cross-repository directory contamination, achieves a 100\% pass rate on sandbox-verified repairs, and reduces mean time to triage (MTTT) and mean time to remediation (MTTR) by an estimated 68\% compared to conventional manual developer workflows.
+
+\vspace{0.6cm}
+\noindent\textbf{Keywords:} Software Repository Intelligence, Static Application Security Testing (SAST), Automated Program Repair (APR), Large Language Models, GitHub App Architecture, Docker Sandboxing, Continuous Integration.

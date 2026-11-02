@@ -298,3 +298,4 @@ API_ENDPOINT_TABLE_ROWS = [
     ("GET", "/api/v1/remediations/{id}", "X-API-Key", "Retrieve remediation proposal, unified diff, verification log, and Draft PR URL."),
     ("POST", "/api/v1/webhooks/github", "HMAC-SHA256", "Inbound GitHub webhook handler for push, pull_request, and workflow_run events.")
 ]
+

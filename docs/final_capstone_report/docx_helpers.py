@@ -73,3 +73,4 @@ def set_table_borders(table, top_sz=12, bottom_sz=12, header_bottom_sz=8):
     tblPr.append(tblBorders)
 
 print("Helper functions compiled successfully.")
+

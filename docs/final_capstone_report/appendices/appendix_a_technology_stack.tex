@@ -1,0 +1,85 @@
+\chapter{Technology Stack and Environment Specifications}
+\label{app:tech-stack}
+
+\section{Core Technology Matrix}
+
+MergeMind is built upon a modern, cloud-native technology stack selected for high concurrency, deterministic static analysis performance, and strict cryptographic security:
+
+\begin{longtable}{p{0.25\textwidth} p{0.25\textwidth} p{0.45\textwidth}}
+\caption{MergeMind Production Technology Stack Specifications} \label{tab:app-tech-stack} \\
+\toprule
+\textbf{Subsystem Layer} & \textbf{Technology / Library} & \textbf{Role and Justification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Subsystem Layer} & \textbf{Technology / Library} & \textbf{Role and Justification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+
+Frontend Presentation & React 18 + Vite & Modern UI library with concurrent rendering and optimized Hot Module Replacement. \\
+\addlinespace
+Frontend Language & TypeScript 5.0+ & Enforces strict compile-time type safety across API client interactions and state management. \\
+\addlinespace
+Frontend Styling & Tailwind CSS & Utility-first CSS framework providing a responsive, enterprise-grade dark-mode design system. \\
+\addlinespace
+UI Iconography & Lucide React & Clean, lightweight icon suite for telemetry cards, status badges, and tree navigation. \\
+\addlinespace
+Backend Framework & FastAPI (Python 3.11) & High-performance asynchronous ASGI web framework with native Pydantic validation. \\
+\addlinespace
+ASGI Web Server & Uvicorn & Ultra-fast asynchronous server implementation for Python based on uvloop and httptools. \\
+\addlinespace
+Relational Database & PostgreSQL 18-alpine & ACID-compliant relational persistence store for repositories, health runs, and CI failure traces. \\
+\addlinespace
+Database ORM & SQLAlchemy 2.0 & Modern asynchronous Object-Relational Mapper utilizing Asyncpg for non-blocking I/O. \\
+\addlinespace
+Schema Migrations & Alembic & Deterministic version-controlled database schema migration engine. \\
+\addlinespace
+Code Quality Linter & Astral Ruff & Extremely fast Python linter and formatter written in Rust; parses AST at 100K+ LOC/sec. \\
+\addlinespace
+Static Security SAST & Bandit & AST security analysis engine detecting CWE vulnerabilities and unsafe code idioms. \\
+\addlinespace
+Dependency SCA & pip-audit & Vulnerability scanner auditing pinned dependency lockfiles against PyPI and OSV databases. \\
+\addlinespace
+Complexity Scanner & Radon & Static McCabe cyclomatic complexity and Maintainability Index calculator. \\
+\addlinespace
+Test Automation & Pytest 8.1+ & Industry-standard testing framework for unit, integration, and sandbox execution test suites. \\
+\addlinespace
+Generative AI Engine & Google Gemini 3.6 Flash & State-of-the-art LLM with sub-400ms latency, 1M+ context window, and unified diff synthesis. \\
+\addlinespace
+Sandbox Virtualization & Docker Engine 24.0+ & OS-level container isolation utilizing Linux namespaces and cgroups for untrusted patch testing. \\
+\addlinespace
+Container Orchestration & Docker Compose v2 & Multi-container topology orchestration managing networks, volumes, and service startup order. \\
+\end{longtable}
+
+\section{Production Environment Variables Reference}
+
+The complete environment configuration loaded from the root \texttt{.env} file is specified below:
+
+\begin{lstlisting}[language=bash, caption={Complete Production Environment Variable Configuration}]
+PROJECT_NAME="MergeMind"
+ENVIRONMENT="production"
+API_V1_STR="/api/v1"
+BACKEND_CORS_ORIGINS='["http://localhost:3000","http://127.0.0.1:3000"]'
+MERGEMIND_API_KEY="mergemind-dev-insecure-key"
+
+POSTGRES_SERVER="mergemind-db"
+POSTGRES_PORT=5432
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="secure_db_password"
+POSTGRES_DB="mergemind"
+SQLALCHEMY_DATABASE_URI="postgresql+asyncpg://postgres:secure_db_password@mergemind-db:5432/mergemind"
+
+GITHUB_APP_ID="5571829"
+GITHUB_APP_PRIVATE_KEY_PATH="backend/keys/github-app.pem"
+GITHUB_WEBHOOK_SECRET="cryptographic_hmac_secret_key"
+GITHUB_INSTALLATION_ID="177642105"
+
+GEMINI_API_KEY="AIzaSy_production_gemini_api_key"
+REMEDIATION_MODEL="gemini-3.6-flash"
+REMEDIATION_TIMEOUT_SECONDS=45
+SANDBOX_DOCKER_IMAGE="python:3.11-slim"
+\end{lstlisting}

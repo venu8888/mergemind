@@ -1,0 +1,65 @@
+\chapter{User Manual and Deployment Guide}
+\label{app:user-manual}
+
+\section{Prerequisites and System Requirements}
+
+To deploy and execute MergeMind locally or on cloud virtual machines, ensure the host satisfies the following minimum hardware and software prerequisites:
+
+\begin{itemize}
+    \item \textbf{Operating System:} Linux (Ubuntu 22.04 LTS recommended), macOS (Apple Silicon / Intel), or Windows 11 with WSL2.
+    \item \textbf{Hardware:} Minimum 4 CPU cores, 8 GB RAM (16 GB recommended for concurrent Docker sandboxes), and 20 GB available SSD storage.
+    \item \textbf{Software:} Docker Engine 24.0+ and Docker Compose v2; Python 3.11+; Node.js 20+; Git 2.40+.
+    \item \textbf{Credentials:} GitHub App Private Key (\texttt{github-app.pem}), GitHub App ID, and Google Gemini API Key.
+\end{itemize}
+
+\section{Quick-Start Deployment Instructions}
+
+\begin{enumerate}
+    \item \textbf{Clone Repository and Checkout Production Branch:}
+    \begin{lstlisting}[language=bash]
+git clone https://github.com/venu8888/mergemind.git
+cd mergemind
+git checkout feature/phase-4-remediation-release
+    \end{lstlisting}
+
+    \item \textbf{Configure Environment Variables:}
+    Copy the sample environment template and populate secret tokens:
+    \begin{lstlisting}[language=bash]
+cp .env.example .env
+    \end{lstlisting}
+    Ensure \texttt{GITHUB\_APP\_ID}, \texttt{GITHUB\_INSTALLATION\_ID}, \texttt{GITHUB\_WEBHOOK\_SECRET}, and \texttt{GEMINI\_API\_KEY} are correctly defined.
+
+    \item \textbf{Deploy Cryptographic Private Key:}
+    Place the GitHub App private RSA key in the backend keys directory and set strict permissions:
+    \begin{lstlisting}[language=bash]
+mkdir -p backend/keys
+cp /path/to/your-app.private-key.pem backend/keys/github-app.pem
+chmod 400 backend/keys/github-app.pem
+    \end{lstlisting}
+
+    \item \textbf{Launch Docker Compose Stack:}
+    Build and launch all services in detached mode:
+    \begin{lstlisting}[language=bash]
+docker compose up -d --build
+    \end{lstlisting}
+    Verify that all three containers (\texttt{mergemind-frontend}, \texttt{mergemind-backend}, \texttt{mergemind-db}) are in the healthy running state:
+    \begin{lstlisting}[language=bash]
+docker compose ps
+    \end{lstlisting}
+
+    \item \textbf{Access Platform Services:}
+    \begin{itemize}
+        \item \textbf{Frontend User Interface:} \url{http://localhost:3000}
+        \item \textbf{Backend REST API Swagger Documentation:} \url{http://localhost:8000/docs}
+        \item \textbf{Health Probe:} \url{http://localhost:8000/health}
+    \end{itemize}
+\end{enumerate}
+
+\section{Operating the Web Interface}
+
+\begin{enumerate}
+    \item \textbf{Repository Synchronization:} On the Overview page, click \textbf{``Sync Repositories''} to pull all repositories authorized by your GitHub App installation.
+    \item \textbf{Triggering Health Telemetry:} Select a target repository from the dropdown and click \textbf{``Assess Repository Now''}. MergeMind streams the tarball, executes Ruff, Bandit, pip-audit, and Radon, and updates the score card.
+    \item \textbf{Auditing Security Posture:} Navigate to the \textbf{``Security Posture''} tab to inspect compliance across all 43 checks organized into the four operational domains.
+    \item \textbf{Ingesting CI Failures and Remediating:} In the \textbf{``CI Failures''} view, click \textbf{``Ingest CI Failure Log''}, paste the console trace, and submit. Once parsed, click \textbf{``Remediate with AI''}. Review the generated diff and verify that GitHub Draft PR \#101 is automatically opened upon sandbox passage.
+\end{enumerate}

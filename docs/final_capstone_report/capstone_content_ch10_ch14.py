@@ -317,3 +317,4 @@ BENCHMARK_TABLE_ROWS = [
     ("Patch Verification Safety", "Developer local machine", "CI runner (post-push)", "Isolated Docker sandbox", "Zero Host Exposure"),
     ("Draft PR Creation", "Manual git commit + PR", "Manual git commit + PR", "Autonomous GitHub App PR", "Fully Autonomous")
 ]
+

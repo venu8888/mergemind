@@ -141,3 +141,4 @@ The complete deliverable package resides in `mergemind/docs/final_capstone_repor
    - `arch_10_database_er_diagram.png`
 4. **`MergeMind_Report_Assets/`** — Real telemetry screenshots, UI captures, and Woxsen University branding assets.
 5. **`REPORT_CONTENT_AUDIT.md`** — This provenance audit document.
+

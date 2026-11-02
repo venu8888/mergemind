@@ -1,0 +1,192 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% -------------------------------------------------------------
+% Academic Typography and Page Geometry
+% -------------------------------------------------------------
+\usepackage[a4paper, top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% Times New Roman font for pdfLaTeX
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% -------------------------------------------------------------
+% Mathematics and Symbols
+% -------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% -------------------------------------------------------------
+% Tables and Formatting
+% -------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{array}
+
+% -------------------------------------------------------------
+% Graphics and Captions
+% -------------------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{./}}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=small, labelfont=bf, margin=10pt}
+
+% -------------------------------------------------------------
+% Code Listings and Colors
+% -------------------------------------------------------------
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{codebg}{RGB}{248, 250, 252}
+\definecolor{codeframe}{RGB}{226, 232, 240}
+\definecolor{codegreen}{RGB}{22, 101, 52}
+\definecolor{codeblue}{RGB}{29, 78, 216}
+\definecolor{codegray}{RGB}{100, 116, 139}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{red!70!black},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=6pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{codeframe}
+}
+
+% -------------------------------------------------------------
+% Lists and Enumerations
+% -------------------------------------------------------------
+\usepackage{enumitem}
+
+% -------------------------------------------------------------
+% Headers and Footers
+% -------------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\small\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Fancier chapter titles
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{18pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{20pt}{30pt}
+
+% -------------------------------------------------------------
+% Hyperlinks and Cross-Referencing
+% -------------------------------------------------------------
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!80!black,
+    pdfauthor={[Candidate Full Name]},
+    pdftitle={MergeMind: Final Capstone Project Report},
+    pdfsubject={AI-Powered GitHub Repository Intelligence Platform}
+}
+\usepackage{cleveref}
+
+% -------------------------------------------------------------
+% DOCUMENT BODY
+% -------------------------------------------------------------
+\begin{document}
+
+% -------------------------------------------------------------
+% Preliminary Pages (Roman Numerals)
+% -------------------------------------------------------------
+\pagenumbering{roman}
+\input{preliminary/title_page}
+\cleardoublepage
+
+\input{preliminary/certificate}
+\cleardoublepage
+
+\input{preliminary/declaration}
+\cleardoublepage
+
+\input{preliminary/acknowledgement}
+\cleardoublepage
+
+\input{preliminary/abstract}
+\cleardoublepage
+
+\input{preliminary/abbreviations}
+\cleardoublepage
+
+\input{preliminary/lists}
+\cleardoublepage
+
+% -------------------------------------------------------------
+% Main Chapters (Arabic Numerals)
+% -------------------------------------------------------------
+\pagenumbering{arabic}
+
+\input{chapters/chapter1_introduction}
+\cleardoublepage
+
+\input{chapters/chapter2_literature_review}
+\cleardoublepage
+
+\input{chapters/chapter3_system_design}
+\cleardoublepage
+
+\input{chapters/chapter4_implementation}
+\cleardoublepage
+
+\input{chapters/chapter5_testing_results}
+\cleardoublepage
+
+\input{chapters/chapter6_discussion_evaluation}
+\cleardoublepage
+
+\input{chapters/chapter7_conclusion_future_scope}
+\cleardoublepage
+
+% -------------------------------------------------------------
+% Bibliography (IEEE Format)
+% -------------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\addcontentsline{toc}{chapter}{References}
+\cleardoublepage
+
+% -------------------------------------------------------------
+% Appendices
+% -------------------------------------------------------------
+\appendix
+\input{appendices/appendix_a_technology_stack}
+\cleardoublepage
+
+\input{appendices/appendix_b_api_reference}
+\cleardoublepage
+
+\input{appendices/appendix_c_database_design}
+\cleardoublepage
+
+\input{appendices/appendix_d_test_cases}
+\cleardoublepage
+
+\input{appendices/appendix_e_user_manual}
+\cleardoublepage
+
+\end{document}

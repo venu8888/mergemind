@@ -139,3 +139,4 @@ ABBREVIATIONS = [
     ("VCS", "Version Control System"),
     ("XSS", "Cross-Site Scripting")
 ]
+

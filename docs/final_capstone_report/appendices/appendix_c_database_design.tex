@@ -1,0 +1,80 @@
+\chapter{Database Design and Physical Data Dictionary}
+\label{app:database-design}
+
+\section{Physical Relational Schema}
+
+MergeMind's relational persistence tier is engineered in PostgreSQL 18. Tables~\ref{tab:app-dict-repos} through~\ref{tab:app-dict-ci} detail the physical table definitions, columns, data types, and integrity constraints.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Physical Data Dictionary for `repositories` Table}
+    \label{tab:app-dict-repos}
+    \small
+    \begin{tabularx}{\textwidth}{p{0.20\textwidth} p{0.22\textwidth} p{0.25\textwidth} p{0.27\textwidth}}
+        \toprule
+        \textbf{Column Name} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+        \midrule
+        \texttt{id} & INTEGER & PK, NOT NULL, AUTO & Unique primary key identifier. \\
+        \texttt{github\_repo\_id} & BIGINT & NOT NULL, UNIQUE, INDEX & Authoritative GitHub repository ID. \\
+        \texttt{name} & VARCHAR(255) & NOT NULL & Short repository name. \\
+        \texttt{full\_name} & VARCHAR(512) & NOT NULL, UNIQUE & Namespaced repository slug (`owner/repo`). \\
+        \texttt{owner} & VARCHAR(255) & NOT NULL & Owning username or organization. \\
+        \texttt{default\_branch} & VARCHAR(128) & NOT NULL, DEFAULT `main` & Production git branch name. \\
+        \texttt{is\_private} & BOOLEAN & NOT NULL, DEFAULT FALSE & Private repository visibility flag. \\
+        \texttt{installation\_id} & BIGINT & NOT NULL, INDEX & GitHub App installation ID. \\
+        \texttt{created\_at} & TIMESTAMPTZ & NOT NULL, DEFAULT NOW() & Initial registration timestamp. \\
+        \texttt{updated\_at} & TIMESTAMPTZ & NOT NULL, DEFAULT NOW() & Last metadata update timestamp. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Physical Data Dictionary for `health\_assessments` Table}
+    \label{tab:app-dict-health}
+    \small
+    \begin{tabularx}{\textwidth}{p{0.22\textwidth} p{0.20\textwidth} p{0.26\textwidth} p{0.26\textwidth}}
+        \toprule
+        \textbf{Column Name} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+        \midrule
+        \texttt{id} & INTEGER & PK, NOT NULL, AUTO & Unique primary key identifier. \\
+        \texttt{repository\_id} & INTEGER & FK $\to$ \texttt{repositories.id} & Foreign key linking to repository. \\
+        \texttt{commit\_sha} & VARCHAR(40) & NOT NULL, INDEX & Evaluated commit SHA-1 hash. \\
+        \texttt{overall\_score} & FLOAT & NOT NULL & Composite health score (0--100). \\
+        \texttt{completeness} & FLOAT & NOT NULL & Evaluated weight fraction (0.0--1.0). \\
+        \texttt{qualification} & VARCHAR(32) & NOT NULL & Gating status (`QUALIFIED`, etc.). \\
+        \texttt{ruff\_score} & FLOAT & NULLABLE & Normalized Ruff Code Quality score. \\
+        \texttt{bandit\_score} & FLOAT & NULLABLE & Normalized Bandit Security score. \\
+        \texttt{pip\_audit\_score} & FLOAT & NULLABLE & Normalized pip-audit CVE score. \\
+        \texttt{radon\_score} & FLOAT & NULLABLE & Normalized Radon Maintainability score. \\
+        \texttt{pytest\_score} & FLOAT & NULLABLE & Normalized Pytest Test Health score. \\
+        \texttt{created\_at} & TIMESTAMPTZ & NOT NULL, DEFAULT NOW() & Scan completion timestamp. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Physical Data Dictionary for `ci\_failures` and `remediation\_proposals` Tables}
+    \label{tab:app-dict-ci}
+    \small
+    \begin{tabularx}{\textwidth}{p{0.25\textwidth} p{0.20\textwidth} p{0.25\textwidth} p{0.24\textwidth}}
+        \toprule
+        \textbf{Column Name} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+        \midrule
+        \texttt{ci\_failures.id} & INTEGER & PK, NOT NULL, AUTO & Primary key for CI failure event. \\
+        \texttt{ci\_failures.repo\_id} & INTEGER & FK $\to$ \texttt{repositories.id} & Foreign key linking to repository. \\
+        \texttt{ci\_failures.workflow} & VARCHAR(255) & NOT NULL & Actions workflow name. \\
+        \texttt{ci\_failures.commit\_sha} & VARCHAR(40) & NOT NULL & Triggering commit SHA-1 hash. \\
+        \texttt{ci\_failures.raw\_log} & TEXT & NOT NULL & Sanitized console log trace. \\
+        \texttt{ci\_failures.status} & VARCHAR(32) & NOT NULL & Triage status (`OPEN`, `RESOLVED`). \\
+        \midrule
+        \texttt{remed.id} & INTEGER & PK, NOT NULL, AUTO & Primary key for remediation. \\
+        \texttt{remed.ci\_failure\_id} & INTEGER & FK $\to$ \texttt{ci\_failures.id} & Foreign key linking to failure event. \\
+        \texttt{remed.unified\_diff} & TEXT & NOT NULL & Synthesized unified diff patch. \\
+        \texttt{remed.explanation} & TEXT & NOT NULL & LLM natural language rationale. \\
+        \texttt{remed.verif\_status} & VARCHAR(32) & NOT NULL & Sandbox state (`VERIFIED`, etc.). \\
+        \texttt{remed.draft\_pr\_url} & VARCHAR(512) & NULLABLE & Created GitHub Draft PR URL. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}

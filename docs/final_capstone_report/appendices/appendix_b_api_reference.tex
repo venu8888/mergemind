@@ -1,0 +1,70 @@
+\chapter{Comprehensive REST API Endpoint Reference}
+\label{app:api-reference}
+
+\section{API Protocol and Conventions}
+
+MergeMind exposes an OpenAPI 3.0-compliant RESTful interface versioned under the \texttt{/api/v1} namespace. Requests and responses communicate via JSON payloads with standard HTTP status codes. Internal endpoints enforce API key authentication via the \texttt{X-API-Key} header, while public webhook receivers authenticate via GitHub's HMAC-SHA256 signature headers.
+
+\section{Endpoint Directory}
+
+Table~\ref{tab:app-api-reference} provides the comprehensive reference for all primary REST endpoints.
+
+\begin{longtable}{p{0.12\textwidth} p{0.36\textwidth} p{0.18\textwidth} p{0.28\textwidth}}
+\caption{Comprehensive REST API Endpoint Reference} \label{tab:app-api-reference} \\
+\toprule
+\textbf{Method} & \textbf{Endpoint URI Path} & \textbf{Authentication} & \textbf{Operation Summary} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Method} & \textbf{Endpoint URI Path} & \textbf{Authentication} & \textbf{Operation Summary} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+
+GET & \texttt{/health} & None & Service liveness probe returning operational status. \\
+\addlinespace
+GET & \texttt{/api/v1/repositories} & \texttt{X-API-Key} & List all tracked GitHub repositories synchronized with installation. \\
+\addlinespace
+POST & \texttt{/api/v1/repositories/sync} & \texttt{X-API-Key} & Force re-synchronization of repositories from GitHub App. \\
+\addlinespace
+GET & \texttt{/api/v1/repositories/\{id\}} & \texttt{X-API-Key} & Retrieve detailed metadata for a specific repository. \\
+\addlinespace
+GET & \texttt{/api/v1/repositories/\{id\}/health-assessment} & \texttt{X-API-Key} & Retrieve latest cached health assessment or trigger live tarball scan. \\
+\addlinespace
+POST & \texttt{/api/v1/repositories/\{id\}/health-assessment} & \texttt{X-API-Key} & Force execution of a fresh multi-factor health scan on HEAD commit. \\
+\addlinespace
+GET & \texttt{/api/v1/repositories/\{id\}/security-posture} & \texttt{X-API-Key} & Execute and return complete 43-check security posture governance evaluation. \\
+\addlinespace
+POST & \texttt{/api/v1/ci-failures/ingest} & \texttt{X-API-Key} & Ingest raw CI failure logs with automated regex credential scrubbing. \\
+\addlinespace
+GET & \texttt{/api/v1/ci-failures/\{id\}} & \texttt{X-API-Key} & Retrieve detailed CI failure record, parsed stack trace, and triage status. \\
+\addlinespace
+POST & \texttt{/api/v1/ci-failures/\{id\}/remediate} & \texttt{X-API-Key} & Trigger Gemini 3.6 Flash AI remediation and sandbox verification loop. \\
+\addlinespace
+GET & \texttt{/api/v1/remediations/\{id\}} & \texttt{X-API-Key} & Retrieve remediation proposal, unified diff, verification log, and Draft PR URL. \\
+\addlinespace
+POST & \texttt{/api/v1/webhooks/github} & \texttt{HMAC-SHA256} & Inbound GitHub webhook handler for push, pull\_request, and workflow\_run events. \\
+\end{longtable}
+
+\section{JSON Schema Models}
+
+\begin{lstlisting}[language=json, caption={Health Assessment Response Schema Model}]
+{
+  "repository_id": 42,
+  "commit_sha": "060d223a54b387ef",
+  "overall_score": 91.0,
+  "completeness": 0.80,
+  "qualification": "QUALIFIED",
+  "scanners": {
+    "ruff": { "score": 100.0, "status": "ENABLED", "weight": 0.25 },
+    "bandit": { "score": 100.0, "status": "ENABLED", "weight": 0.25 },
+    "pip_audit": { "score": 100.0, "status": "ENABLED", "weight": 0.20 },
+    "radon": { "score": 25.0, "status": "ENABLED", "weight": 0.10 },
+    "pytest": { "score": null, "status": "UNCONFIGURED", "weight": 0.20 }
+  },
+  "created_at": "2026-11-02T10:00:00Z"
+}
+\end{lstlisting}
