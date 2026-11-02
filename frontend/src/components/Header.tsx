@@ -55,19 +55,15 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-[1440px] mx-auto px-6">
         {/* Top Bar: Brand, Repo Context & Refresh */}
         <div className="flex items-center justify-between h-14">
-          {/* Logo & Product Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-control bg-ink-800 border border-white/[0.08] flex items-center justify-center text-ink-text-primary">
-              <ShieldCheck className="w-4 h-4 text-slate-200" strokeWidth={1.5} />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-sm tracking-tight text-white">MergeMind</span>
-              <span className="text-[11px] font-mono text-zinc-500">v4.2</span>
-              <span className="text-zinc-600 hidden sm:inline">•</span>
-              <span className="text-xs text-zinc-400 hidden sm:inline font-normal">
-                Repository Verification & Automated Remediation
-              </span>
-            </div>
+          {/* Product Title */}
+          <div className="flex items-baseline gap-3">
+            <span className="font-bold text-lg sm:text-xl tracking-tight text-white">
+              MergeMind
+            </span>
+            <span className="text-zinc-600 hidden sm:inline text-xs font-mono">•</span>
+            <span className="text-xs text-zinc-400 hidden sm:inline font-normal">
+              Repository Verification & Automated Remediation
+            </span>
           </div>
 
           {/* Repository Selector & Status */}

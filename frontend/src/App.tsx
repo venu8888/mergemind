@@ -174,7 +174,7 @@ export const App: React.FC = () => {
       <footer className="border-t border-white/[0.08] bg-ink-950 py-5 mt-10 text-xs text-zinc-500 font-mono">
         <div className="max-w-[1440px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-zinc-300">MergeMind v4.2.0</span>
+            <span className="font-semibold text-zinc-300">MergeMind</span>
             <span>•</span>
             <span className="text-zinc-500 font-sans">Repository Health & Automated Remediation Platform</span>
           </div>
